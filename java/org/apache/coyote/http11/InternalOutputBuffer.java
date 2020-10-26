@@ -23,6 +23,8 @@ import java.net.Socket;
 
 import org.apache.coyote.OutputBuffer;
 import org.apache.coyote.Response;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.AbstractEndpoint;
 import org.apache.tomcat.util.net.SocketWrapper;
@@ -34,6 +36,8 @@ import org.apache.tomcat.util.net.SocketWrapper;
  */
 public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
     implements ByteChunk.ByteOutputChannel {
+
+    private static final Log log = LogFactory.getLog(InternalOutputBuffer.class);
 
     // ----------------------------------------------------------- Constructors
 
@@ -55,6 +59,11 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
         socketBuffer = new ByteChunk();
         socketBuffer.setByteOutputChannel(this);
 
+        if (log.isDebugEnabled()) {
+            log.debug("Creating InternalOutputBuffer [" + this.hashCode() +
+                    "] with OutputStreamOutputBuffer [" + outputStreamOutputBuffer.hashCode() +
+                    "], socketBuffer [" + socketBuffer.hashCode() + "]");
+        }
         committed = false;
         finished = false;
 
@@ -86,8 +95,17 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
         if (socketBufferSize > 500) {
             useSocketBuffer = true;
             socketBuffer.allocate(socketBufferSize, socketBufferSize);
+            log.debug("Setting socket buffer size for InternalOutputBuffer [" + this.hashCode() +
+                    "] with OutputStreamOutputBuffer [" + outputStreamOutputBuffer.hashCode() +
+                    "] to [" + socketBufferSize +
+                    "], socketBuffer is enabled, socketBuffer is [" + socketBuffer.hashCode() +
+                    "], underlying byte[] is [" + socketBuffer.getBuffer().hashCode() + "]");
         } else {
             useSocketBuffer = false;
+            log.debug("Setting socket buffer size for InternalOutputBuffer [" + this.hashCode() +
+                    "] with OutputStreamOutputBuffer [" + outputStreamOutputBuffer.hashCode() +
+                    "] to [" + socketBufferSize +
+                    "], socketBuffer is disabled]");
         }
 
     }
@@ -100,6 +118,10 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
             AbstractEndpoint<Socket> endpoint) throws IOException {
 
         outputStream = socketWrapper.getSocket().getOutputStream();
+
+        log.debug("Creating outputStream for InternalOutputBuffer [" + this.hashCode() +
+                "], client port is [" + socketWrapper.getSocket().getPort() +
+                "], outputStream is [" + outputStream.hashCode() + "]");
     }
 
 
@@ -130,6 +152,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
     public void recycle() {
         super.recycle();
         outputStream = null;
+        log.debug("Recycling InternalOutputBuffer [" + this.hashCode() + "]");
     }
 
 
@@ -143,6 +166,7 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
     public void nextRequest() {
         super.nextRequest();
         socketBuffer.recycle();
+        log.debug("InternalOutputBuffer [" + this.hashCode() + "]");
     }
 
 
@@ -197,8 +221,15 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
             // Sending the response header buffer
             if (useSocketBuffer) {
                 socketBuffer.append(buf, 0, pos);
+                log.debug("Writing headers of length [" + pos +
+                        "] for InternalOutputBuffer [" + this.hashCode() +
+                        "] to socketBuffer [" + socketBuffer.hashCode() +
+                        "], underlying byte[] is [" + socketBuffer.getBuffer().hashCode() + "]");
             } else {
                 outputStream.write(buf, 0, pos);
+                log.debug("Writing headers of length [" + pos +
+                        "] for InternalOutputBuffer [" + this.hashCode() +
+                        "] to outputStream [" + outputStream.hashCode() + "]");
             }
         }
 
@@ -213,6 +244,10 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
         throws IOException {
         if (len > 0) {
             outputStream.write(cbuf, off, len);
+            log.debug("Writing body of length [" + len +
+                    "] from byte[] [" + cbuf.hashCode() +
+                    "] for InternalOutputBuffer [" + this.hashCode() +
+                    "] to outputStream [" + outputStream.hashCode() + "]");
         }
     }
 
@@ -239,9 +274,20 @@ public class InternalOutputBuffer extends AbstractOutputBuffer<Socket>
             if (useSocketBuffer) {
                 socketBuffer.append(chunk.getBuffer(), chunk.getStart(),
                                     length);
+                log.debug("Writing body of length [" + length +
+                        "] from ByteChunk [" + chunk.hashCode() +
+                        "] with underlying byte[] [" + chunk.getBuffer().hashCode() +
+                        "] for InternalOutputBuffer [" + this.hashCode() +
+                        "] to socketBuffer [" + socketBuffer.hashCode() +
+                        "] with underlying byte[] [" + socketBuffer.getBuffer().hashCode() + "]");
             } else {
                 outputStream.write(chunk.getBuffer(), chunk.getStart(),
                                    length);
+                log.debug("Writing body of length [" + length +
+                        "] from ByteChunk [" + chunk.hashCode() +
+                        "] with underlying byte[] [" + chunk.getBuffer().hashCode() +
+                        "] for InternalOutputBuffer [" + this.hashCode() +
+                        "] to outputStream [" + outputStream.hashCode() + "]");
             }
             byteCount += chunk.getLength();
             return chunk.getLength();
