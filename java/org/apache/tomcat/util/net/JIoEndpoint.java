@@ -18,10 +18,15 @@
 package org.apache.tomcat.util.net;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.BindException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
+import java.nio.channels.SocketChannel;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Iterator;
@@ -219,7 +224,7 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                     try {
                         // Accept the next incoming connection from the server
                         // socket
-                        socket = serverSocketFactory.acceptSocket(serverSocket);
+                        socket = new DebugSocket(serverSocketFactory.acceptSocket(serverSocket));
                     } catch (IOException ioe) {
                         countDownConnection();
                         // Introduce delay if necessary
@@ -602,11 +607,281 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
     public void removeWaitingRequest(SocketWrapper<Socket> socketWrapper) {
         waitingRequests.remove(socketWrapper);
     }
-    
-    
+
 
     @Override
     protected Log getLog() {
         return log;
+    }
+
+
+    private static class DebugSocket extends Socket {
+
+        private static final Log log = LogFactory.getLog(DebugSocket.class);
+
+        private final Socket inner;
+
+
+        public DebugSocket(Socket inner) {
+            this.inner = inner;
+            log.debug("DebugSocket [" + this.hashCode() +
+                    "], inner Socket [" + inner.hashCode() +
+                    "] for client port [" + inner.getPort() +
+                    "]");
+        }
+
+
+        @Override
+        public void connect(SocketAddress endpoint) throws IOException {
+            inner.connect(endpoint);
+        }
+
+
+        @Override
+        public void connect(SocketAddress endpoint, int timeout) throws IOException {
+            inner.connect(endpoint, timeout);
+        }
+
+
+        @Override
+        public void bind(SocketAddress bindpoint) throws IOException {
+            inner.bind(bindpoint);
+        }
+
+
+        @Override
+        public InetAddress getInetAddress() {
+            return inner.getInetAddress();
+        }
+
+
+        @Override
+        public InetAddress getLocalAddress() {
+            return inner.getLocalAddress();
+        }
+
+
+        @Override
+        public int getPort() {
+            return inner.getPort();
+        }
+
+
+        @Override
+        public int getLocalPort() {
+            return inner.getLocalPort();
+        }
+
+
+        @Override
+        public SocketAddress getRemoteSocketAddress() {
+            return inner.getRemoteSocketAddress();
+        }
+
+
+        @Override
+        public SocketAddress getLocalSocketAddress() {
+            return inner.getLocalSocketAddress();
+        }
+
+
+        @Override
+        public SocketChannel getChannel() {
+            return inner.getChannel();
+        }
+
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            return inner.getInputStream();
+        }
+
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            OutputStream os = inner.getOutputStream();
+            log.debug("DebugSocket [" + this.hashCode() +
+                    "], inner Socket [" + inner.hashCode() +
+                    "] has OutputStream [" + os.hashCode() +
+                    "]");
+            return os;
+        }
+
+
+        @Override
+        public void setTcpNoDelay(boolean on) throws SocketException {
+            inner.setTcpNoDelay(on);
+        }
+
+
+        @Override
+        public boolean getTcpNoDelay() throws SocketException {
+            return inner.getTcpNoDelay();
+        }
+
+
+        @Override
+        public void setSoLinger(boolean on, int linger) throws SocketException {
+            inner.setSoLinger(on, linger);
+        }
+
+
+        @Override
+        public int getSoLinger() throws SocketException {
+            return inner.getSoLinger();
+        }
+
+
+        @Override
+        public void sendUrgentData(int data) throws IOException {
+            inner.sendUrgentData(data);
+        }
+
+
+        @Override
+        public void setOOBInline(boolean on) throws SocketException {
+            inner.setOOBInline(on);
+        }
+
+
+        @Override
+        public boolean getOOBInline() throws SocketException {
+            return inner.getOOBInline();
+        }
+
+
+        @Override
+        public synchronized void setSoTimeout(int timeout) throws SocketException {
+            inner.setSoTimeout(timeout);
+        }
+
+
+        @Override
+        public synchronized int getSoTimeout() throws SocketException {
+            return inner.getSoTimeout();
+        }
+
+
+        @Override
+        public synchronized void setSendBufferSize(int size) throws SocketException {
+            inner.setSendBufferSize(size);
+        }
+
+
+        @Override
+        public synchronized int getSendBufferSize() throws SocketException {
+            return inner.getSendBufferSize();
+        }
+
+
+        @Override
+        public synchronized void setReceiveBufferSize(int size) throws SocketException {
+            inner.setReceiveBufferSize(size);
+        }
+
+
+        @Override
+        public synchronized int getReceiveBufferSize() throws SocketException {
+            return inner.getReceiveBufferSize();
+        }
+
+
+        @Override
+        public void setKeepAlive(boolean on) throws SocketException {
+            inner.setKeepAlive(on);
+        }
+
+
+        @Override
+        public boolean getKeepAlive() throws SocketException {
+            return inner.getKeepAlive();
+        }
+
+
+        @Override
+        public void setTrafficClass(int tc) throws SocketException {
+            inner.setTrafficClass(tc);
+        }
+
+
+        @Override
+        public int getTrafficClass() throws SocketException {
+            return inner.getTrafficClass();
+        }
+
+
+        @Override
+        public void setReuseAddress(boolean on) throws SocketException {
+            inner.setReuseAddress(on);
+        }
+
+
+        @Override
+        public boolean getReuseAddress() throws SocketException {
+            return inner.getReuseAddress();
+        }
+
+
+        @Override
+        public synchronized void close() throws IOException {
+            log.debug("DebugSocket [" + this.hashCode() +
+                    "], inner Socket [" + inner.hashCode() +
+                    "]", new Exception());
+            inner.close();
+        }
+
+
+        @Override
+        public void shutdownInput() throws IOException {
+            inner.shutdownInput();
+        }
+
+
+        @Override
+        public void shutdownOutput() throws IOException {
+            inner.shutdownOutput();
+        }
+
+
+        @Override
+        public String toString() {
+            return inner.toString();
+        }
+
+
+        @Override
+        public boolean isConnected() {
+            return inner.isConnected();
+        }
+
+
+        @Override
+        public boolean isBound() {
+            return inner.isBound();
+        }
+
+
+        @Override
+        public boolean isClosed() {
+            return inner.isClosed();
+        }
+
+
+        @Override
+        public boolean isInputShutdown() {
+            return inner.isInputShutdown();
+        }
+
+
+        @Override
+        public boolean isOutputShutdown() {
+            return inner.isOutputShutdown();
+        }
+
+
+        @Override
+        public void setPerformancePreferences(int connectionTime, int latency, int bandwidth) {
+            inner.setPerformancePreferences(connectionTime, latency, bandwidth);
+        }
     }
 }
