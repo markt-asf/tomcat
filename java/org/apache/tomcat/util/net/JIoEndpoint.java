@@ -633,255 +633,581 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void connect(SocketAddress endpoint) throws IOException {
-            inner.connect(endpoint);
+            log.debug("connect(SocketAddress)");
+            try {
+                inner.connect(endpoint);
+            } catch (IOException e) {
+                log.debug("connect(SocketAddress)", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("connect(SocketAddress)", e);
+                throw e;
+            }
         }
 
 
         @Override
         public void connect(SocketAddress endpoint, int timeout) throws IOException {
-            inner.connect(endpoint, timeout);
+            log.debug("connect(SocketAddress,int)");
+            try {
+                inner.connect(endpoint, timeout);
+            } catch (IOException e) {
+                log.debug("connect(SocketAddress,int)", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("connect(SocketAddress,int)", e);
+                throw e;
+            }
         }
 
 
         @Override
         public void bind(SocketAddress bindpoint) throws IOException {
-            inner.bind(bindpoint);
+            log.debug("bind");
+            try {
+                inner.bind(bindpoint);
+            } catch (IOException e) {
+                log.debug("bind", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("bind", e);
+                throw e;
+            }
         }
 
 
         @Override
         public InetAddress getInetAddress() {
-            return inner.getInetAddress();
+            log.debug("getInetAddress");
+            try {
+                return inner.getInetAddress();
+            } catch (RuntimeException e) {
+                log.debug("getInetAddress", e);
+                throw e;
+            }
         }
 
 
         @Override
         public InetAddress getLocalAddress() {
-            return inner.getLocalAddress();
+            log.debug("getLocalAddress");
+            try {
+                return inner.getLocalAddress();
+            } catch (RuntimeException e) {
+                log.debug("getLocalAddress", e);
+                throw e;
+            }
         }
 
 
         @Override
         public int getPort() {
-            return inner.getPort();
+            log.debug("getPort");
+            try {
+                return inner.getPort();
+            } catch (RuntimeException e) {
+                log.debug("getPort", e);
+                throw e;
+            }
         }
 
 
         @Override
         public int getLocalPort() {
-            return inner.getLocalPort();
+            log.debug("getLocalPort");
+            try {
+                return inner.getLocalPort();
+            } catch (RuntimeException e) {
+                log.debug("getLocalPort", e);
+                throw e;
+            }
         }
 
 
         @Override
         public SocketAddress getRemoteSocketAddress() {
-            return inner.getRemoteSocketAddress();
+            log.debug("getRemoteSocketAddress");
+            try {
+                return inner.getRemoteSocketAddress();
+            } catch (RuntimeException e) {
+                log.debug("getRemoteSocketAddress", e);
+                throw e;
+            }
         }
 
 
         @Override
         public SocketAddress getLocalSocketAddress() {
-            return inner.getLocalSocketAddress();
+            log.debug("getLocalSocketAddress");
+            try {
+                return inner.getLocalSocketAddress();
+            } catch (RuntimeException e) {
+                log.debug("getLocalSocketAddress", e);
+                throw e;
+            }
         }
 
 
         @Override
         public SocketChannel getChannel() {
-            return inner.getChannel();
+            log.debug("getChannel");
+            try {
+                return inner.getChannel();
+            } catch (RuntimeException e) {
+                log.debug("getChannel", e);
+                throw e;
+            }
         }
 
 
         @Override
         public InputStream getInputStream() throws IOException {
-            return inner.getInputStream();
+            log.debug("getInputStream");
+            try {
+                return inner.getInputStream();
+            } catch (IOException e) {
+                log.debug("getInputStream", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("getInputStream", e);
+                throw e;
+            }
         }
 
 
         @Override
         public OutputStream getOutputStream() throws IOException {
-            OutputStream os = inner.getOutputStream();
-            log.debug("DebugSocket [" + this.hashCode() +
-                    "], inner Socket [" + inner.hashCode() +
-                    "] has OutputStream [" + os.hashCode() +
-                    "]");
-            return os;
+            try {
+                OutputStream os = inner.getOutputStream();
+                log.debug("DebugSocket [" + this.hashCode() +
+                        "], inner Socket [" + inner.hashCode() +
+                        "] has OutputStream [" + os.hashCode() +
+                        "]");
+                return os;
+            } catch (IOException e) {
+                log.debug("getOutputStream", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("getOutputStream", e);
+                throw e;
+            }
         }
 
 
         @Override
         public void setTcpNoDelay(boolean on) throws SocketException {
-            inner.setTcpNoDelay(on);
+            log.debug("setTcpNoDelay");
+            try {
+                inner.setTcpNoDelay(on);
+            } catch (SocketException e) {
+                log.debug("setTcpNoDelay", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("setTcpNoDelay", e);
+                throw e;
+            }
         }
 
 
         @Override
         public boolean getTcpNoDelay() throws SocketException {
-            return inner.getTcpNoDelay();
+            log.debug("getTcpNoDelay");
+            try {
+                return inner.getTcpNoDelay();
+            } catch (SocketException e) {
+                log.debug("getTcpNoDelay", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("getTcpNoDelay", e);
+                throw e;
+            }
         }
 
 
         @Override
         public void setSoLinger(boolean on, int linger) throws SocketException {
-            inner.setSoLinger(on, linger);
+            log.debug("setSoLinger");
+            try {
+                inner.setSoLinger(on, linger);
+            } catch (SocketException e) {
+                log.debug("setSoLinger", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("setSoLinger", e);
+                throw e;
+            }
         }
 
 
         @Override
         public int getSoLinger() throws SocketException {
-            return inner.getSoLinger();
+            log.debug("getSoLinger");
+            try {
+                return inner.getSoLinger();
+            } catch (SocketException e) {
+                log.debug("getSoLinger", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("getSoLinger", e);
+                throw e;
+            }
         }
 
 
         @Override
         public void sendUrgentData(int data) throws IOException {
-            inner.sendUrgentData(data);
+            log.debug("sendUrgentData");
+            try {
+                inner.sendUrgentData(data);
+            } catch (IOException e) {
+                log.debug("sendUrgentData", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("sendUrgentData", e);
+                throw e;
+            }
         }
 
 
         @Override
         public void setOOBInline(boolean on) throws SocketException {
-            inner.setOOBInline(on);
+            log.debug("setOOBInline");
+            try {
+                inner.setOOBInline(on);
+            } catch (SocketException e) {
+                log.debug("setOOBInline", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("setOOBInline", e);
+                throw e;
+            }
         }
 
 
         @Override
         public boolean getOOBInline() throws SocketException {
-            return inner.getOOBInline();
+            log.debug("getOOBInline");
+            try {
+                return inner.getOOBInline();
+            } catch (SocketException e) {
+                log.debug("getOOBInline", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("getOOBInline", e);
+                throw e;
+            }
         }
 
 
         @Override
         public synchronized void setSoTimeout(int timeout) throws SocketException {
-            inner.setSoTimeout(timeout);
+            log.debug("setSoTimeout");
+            try {
+                inner.setSoTimeout(timeout);
+            } catch (SocketException e) {
+                log.debug("setSoTimeout", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("setSoTimeout", e);
+                throw e;
+            }
         }
 
 
         @Override
         public synchronized int getSoTimeout() throws SocketException {
-            return inner.getSoTimeout();
+            log.debug("getSoTimeout");
+            try {
+                return inner.getSoTimeout();
+            } catch (SocketException e) {
+                log.debug("getSoTimeout", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("getSoTimeout", e);
+                throw e;
+            }
         }
 
 
         @Override
         public synchronized void setSendBufferSize(int size) throws SocketException {
-            inner.setSendBufferSize(size);
+            log.debug("setSendBufferSize");
+            try {
+                inner.setSendBufferSize(size);
+            } catch (SocketException e) {
+                log.debug("setSendBufferSize", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("setSendBufferSize", e);
+                throw e;
+            }
         }
 
 
         @Override
         public synchronized int getSendBufferSize() throws SocketException {
-            return inner.getSendBufferSize();
+            log.debug("getSendBufferSize");
+            try {
+                return inner.getSendBufferSize();
+            } catch (SocketException e) {
+                log.debug("getSendBufferSize", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("getSendBufferSize", e);
+                throw e;
+            }
         }
 
 
         @Override
         public synchronized void setReceiveBufferSize(int size) throws SocketException {
-            inner.setReceiveBufferSize(size);
+            log.debug("setReceiveBufferSize");
+            try {
+                inner.setReceiveBufferSize(size);
+            } catch (SocketException e) {
+                log.debug("setReceiveBufferSize", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("setReceiveBufferSize", e);
+                throw e;
+            }
         }
 
 
         @Override
         public synchronized int getReceiveBufferSize() throws SocketException {
-            return inner.getReceiveBufferSize();
+            log.debug("getReceiveBufferSize");
+            try {
+                return inner.getReceiveBufferSize();
+            } catch (SocketException e) {
+                log.debug("getReceiveBufferSize", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("getReceiveBufferSize", e);
+                throw e;
+            }
         }
 
 
         @Override
         public void setKeepAlive(boolean on) throws SocketException {
-            inner.setKeepAlive(on);
+            log.debug("setKeepAlive");
+            try {
+                inner.setKeepAlive(on);
+            } catch (SocketException e) {
+                log.debug("setKeepAlive", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("setKeepAlive", e);
+                throw e;
+            }
         }
 
 
         @Override
         public boolean getKeepAlive() throws SocketException {
-            return inner.getKeepAlive();
+            log.debug("getKeepAlive");
+            try {
+                return inner.getKeepAlive();
+            } catch (SocketException e) {
+                log.debug("getKeepAlive", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("getKeepAlive", e);
+                throw e;
+            }
         }
 
 
         @Override
         public void setTrafficClass(int tc) throws SocketException {
-            inner.setTrafficClass(tc);
+            log.debug("setTrafficClass");
+            try {
+                inner.setTrafficClass(tc);
+            } catch (SocketException e) {
+                log.debug("setTrafficClass", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("setTrafficClass", e);
+                throw e;
+            }
         }
 
 
         @Override
         public int getTrafficClass() throws SocketException {
-            return inner.getTrafficClass();
+            log.debug("getTrafficClass");
+            try {
+                return inner.getTrafficClass();
+            } catch (SocketException e) {
+                log.debug("getTrafficClass", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("getTrafficClass", e);
+                throw e;
+            }
         }
 
 
         @Override
         public void setReuseAddress(boolean on) throws SocketException {
-            inner.setReuseAddress(on);
+            log.debug("setReuseAddress");
+            try {
+                inner.setReuseAddress(on);
+            } catch (SocketException e) {
+                log.debug("setReuseAddress", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("setReuseAddress", e);
+                throw e;
+            }
         }
 
 
         @Override
         public boolean getReuseAddress() throws SocketException {
-            return inner.getReuseAddress();
+            log.debug("getReuseAddress");
+            try {
+                return inner.getReuseAddress();
+            } catch (SocketException e) {
+                log.debug("getReuseAddress", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("getReuseAddress", e);
+                throw e;
+            }
         }
 
 
         @Override
         public synchronized void close() throws IOException {
-            log.debug("DebugSocket [" + this.hashCode() +
+            log.debug("close [" + this.hashCode() +
                     "], inner Socket [" + inner.hashCode() +
                     "]", new Exception());
-            inner.close();
+            log.debug("bind");
+            try {
+                inner.close();
+            } catch (IOException e) {
+                log.debug("close", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("close", e);
+                throw e;
+            }
         }
 
 
         @Override
         public void shutdownInput() throws IOException {
-            inner.shutdownInput();
+            log.debug("shutdownInput");
+            try {
+                inner.shutdownInput();
+            } catch (IOException e) {
+                log.debug("shutdownInput", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("shutdownInput", e);
+                throw e;
+            }
         }
 
 
         @Override
         public void shutdownOutput() throws IOException {
-            inner.shutdownOutput();
+            log.debug("shutdownOutput");
+            try {
+                inner.shutdownOutput();
+            } catch (IOException e) {
+                log.debug("shutdownOutput", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("shutdownOutput", e);
+                throw e;
+            }
         }
 
 
         @Override
         public String toString() {
-            return inner.toString();
+            log.debug("toString");
+            try {
+                return inner.toString();
+            } catch (RuntimeException e) {
+                log.debug("toString", e);
+                throw e;
+            }
         }
 
 
         @Override
         public boolean isConnected() {
-            return inner.isConnected();
+            log.debug("isConnected");
+            try {
+                return inner.isConnected();
+            } catch (RuntimeException e) {
+                log.debug("isConnected", e);
+                throw e;
+            }
         }
 
 
         @Override
         public boolean isBound() {
-            return inner.isBound();
+            log.debug("isBound");
+            try {
+                return inner.isBound();
+            } catch (RuntimeException e) {
+                log.debug("isBound", e);
+                throw e;
+            }
         }
 
 
         @Override
         public boolean isClosed() {
-            return inner.isClosed();
+            log.debug("isClosed");
+            try {
+                return inner.isClosed();
+            } catch (RuntimeException e) {
+                log.debug("isClosed", e);
+                throw e;
+            }
         }
 
 
         @Override
         public boolean isInputShutdown() {
-            return inner.isInputShutdown();
+            log.debug("isInputShutdown");
+            try {
+                return inner.isInputShutdown();
+            } catch (RuntimeException e) {
+                log.debug("isInputShutdown", e);
+                throw e;
+            }
         }
 
 
         @Override
         public boolean isOutputShutdown() {
-            return inner.isOutputShutdown();
+            log.debug("isOutputShutdown");
+            try {
+                return inner.isOutputShutdown();
+            } catch (RuntimeException e) {
+                log.debug("isOutputShutdown", e);
+                throw e;
+            }
         }
 
 
         @Override
         public void setPerformancePreferences(int connectionTime, int latency, int bandwidth) {
-            inner.setPerformancePreferences(connectionTime, latency, bandwidth);
+            log.debug("setPerformancePreferences");
+            try {
+                inner.setPerformancePreferences(connectionTime, latency, bandwidth);
+            } catch (RuntimeException e) {
+                log.debug("setPerformancePreferences", e);
+                throw e;
+            }
         }
     }
 }
