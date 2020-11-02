@@ -633,14 +633,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void connect(SocketAddress endpoint) throws IOException {
-            log.debug("connect(SocketAddress)");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.connect(endpoint);
             } catch (IOException e) {
-                log.debug("connect(SocketAddress)", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("connect(SocketAddress)", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -648,14 +648,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void connect(SocketAddress endpoint, int timeout) throws IOException {
-            log.debug("connect(SocketAddress,int)");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.connect(endpoint, timeout);
             } catch (IOException e) {
-                log.debug("connect(SocketAddress,int)", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("connect(SocketAddress,int)", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -663,14 +663,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void bind(SocketAddress bindpoint) throws IOException {
-            log.debug("bind");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.bind(bindpoint);
             } catch (IOException e) {
-                log.debug("bind", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("bind", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -678,11 +678,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public InetAddress getInetAddress() {
-            log.debug("getInetAddress");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getInetAddress();
             } catch (RuntimeException e) {
-                log.debug("getInetAddress", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -690,11 +690,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public InetAddress getLocalAddress() {
-            log.debug("getLocalAddress");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getLocalAddress();
             } catch (RuntimeException e) {
-                log.debug("getLocalAddress", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -702,11 +702,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public int getPort() {
-            log.debug("getPort");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getPort();
             } catch (RuntimeException e) {
-                log.debug("getPort", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -714,11 +714,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public int getLocalPort() {
-            log.debug("getLocalPort");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getLocalPort();
             } catch (RuntimeException e) {
-                log.debug("getLocalPort", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -726,11 +726,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public SocketAddress getRemoteSocketAddress() {
-            log.debug("getRemoteSocketAddress");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getRemoteSocketAddress();
             } catch (RuntimeException e) {
-                log.debug("getRemoteSocketAddress", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -738,11 +738,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public SocketAddress getLocalSocketAddress() {
-            log.debug("getLocalSocketAddress");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getLocalSocketAddress();
             } catch (RuntimeException e) {
-                log.debug("getLocalSocketAddress", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -750,11 +750,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public SocketChannel getChannel() {
-            log.debug("getChannel");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getChannel();
             } catch (RuntimeException e) {
-                log.debug("getChannel", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -762,14 +762,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public InputStream getInputStream() throws IOException {
-            log.debug("getInputStream");
+            log.debug("[" + this.hashCode() + "]");
             try {
-                return inner.getInputStream();
+                return new DebugInputStream(inner.getInputStream());
             } catch (IOException e) {
-                log.debug("getInputStream", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("getInputStream", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -783,12 +783,12 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
                         "], inner Socket [" + inner.hashCode() +
                         "] has OutputStream [" + os.hashCode() +
                         "]");
-                return os;
+                return new DebugOutputStream(os);
             } catch (IOException e) {
-                log.debug("getOutputStream", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("getOutputStream", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -796,14 +796,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setTcpNoDelay(boolean on) throws SocketException {
-            log.debug("setTcpNoDelay");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.setTcpNoDelay(on);
             } catch (SocketException e) {
-                log.debug("setTcpNoDelay", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("setTcpNoDelay", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -811,14 +811,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean getTcpNoDelay() throws SocketException {
-            log.debug("getTcpNoDelay");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getTcpNoDelay();
             } catch (SocketException e) {
-                log.debug("getTcpNoDelay", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("getTcpNoDelay", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -826,14 +826,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setSoLinger(boolean on, int linger) throws SocketException {
-            log.debug("setSoLinger");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.setSoLinger(on, linger);
             } catch (SocketException e) {
-                log.debug("setSoLinger", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("setSoLinger", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -841,14 +841,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public int getSoLinger() throws SocketException {
-            log.debug("getSoLinger");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getSoLinger();
             } catch (SocketException e) {
-                log.debug("getSoLinger", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("getSoLinger", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -856,14 +856,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void sendUrgentData(int data) throws IOException {
-            log.debug("sendUrgentData");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.sendUrgentData(data);
             } catch (IOException e) {
-                log.debug("sendUrgentData", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("sendUrgentData", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -871,14 +871,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setOOBInline(boolean on) throws SocketException {
-            log.debug("setOOBInline");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.setOOBInline(on);
             } catch (SocketException e) {
-                log.debug("setOOBInline", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("setOOBInline", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -886,14 +886,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean getOOBInline() throws SocketException {
-            log.debug("getOOBInline");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getOOBInline();
             } catch (SocketException e) {
-                log.debug("getOOBInline", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("getOOBInline", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -901,14 +901,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized void setSoTimeout(int timeout) throws SocketException {
-            log.debug("setSoTimeout");
+            log.debug("[" + this.hashCode() + "], timeout [" + timeout + "]");
             try {
                 inner.setSoTimeout(timeout);
             } catch (SocketException e) {
-                log.debug("setSoTimeout", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("setSoTimeout", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -916,14 +916,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized int getSoTimeout() throws SocketException {
-            log.debug("getSoTimeout");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getSoTimeout();
             } catch (SocketException e) {
-                log.debug("getSoTimeout", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("getSoTimeout", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -931,14 +931,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized void setSendBufferSize(int size) throws SocketException {
-            log.debug("setSendBufferSize");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.setSendBufferSize(size);
             } catch (SocketException e) {
-                log.debug("setSendBufferSize", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("setSendBufferSize", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -946,14 +946,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized int getSendBufferSize() throws SocketException {
-            log.debug("getSendBufferSize");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getSendBufferSize();
             } catch (SocketException e) {
-                log.debug("getSendBufferSize", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("getSendBufferSize", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -961,14 +961,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized void setReceiveBufferSize(int size) throws SocketException {
-            log.debug("setReceiveBufferSize");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.setReceiveBufferSize(size);
             } catch (SocketException e) {
-                log.debug("setReceiveBufferSize", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("setReceiveBufferSize", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -976,14 +976,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized int getReceiveBufferSize() throws SocketException {
-            log.debug("getReceiveBufferSize");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getReceiveBufferSize();
             } catch (SocketException e) {
-                log.debug("getReceiveBufferSize", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("getReceiveBufferSize", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -991,14 +991,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setKeepAlive(boolean on) throws SocketException {
-            log.debug("setKeepAlive");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.setKeepAlive(on);
             } catch (SocketException e) {
-                log.debug("setKeepAlive", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("setKeepAlive", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1006,14 +1006,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean getKeepAlive() throws SocketException {
-            log.debug("getKeepAlive");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getKeepAlive();
             } catch (SocketException e) {
-                log.debug("getKeepAlive", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("getKeepAlive", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1021,14 +1021,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setTrafficClass(int tc) throws SocketException {
-            log.debug("setTrafficClass");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.setTrafficClass(tc);
             } catch (SocketException e) {
-                log.debug("setTrafficClass", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("setTrafficClass", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1036,14 +1036,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public int getTrafficClass() throws SocketException {
-            log.debug("getTrafficClass");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getTrafficClass();
             } catch (SocketException e) {
-                log.debug("getTrafficClass", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("getTrafficClass", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1051,14 +1051,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setReuseAddress(boolean on) throws SocketException {
-            log.debug("setReuseAddress");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.setReuseAddress(on);
             } catch (SocketException e) {
-                log.debug("setReuseAddress", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("setReuseAddress", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1066,14 +1066,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean getReuseAddress() throws SocketException {
-            log.debug("getReuseAddress");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.getReuseAddress();
             } catch (SocketException e) {
-                log.debug("getReuseAddress", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("getReuseAddress", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1088,10 +1088,10 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
             try {
                 inner.close();
             } catch (IOException e) {
-                log.debug("close", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("close", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1099,14 +1099,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void shutdownInput() throws IOException {
-            log.debug("shutdownInput");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.shutdownInput();
             } catch (IOException e) {
-                log.debug("shutdownInput", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("shutdownInput", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1114,14 +1114,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void shutdownOutput() throws IOException {
-            log.debug("shutdownOutput");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.shutdownOutput();
             } catch (IOException e) {
-                log.debug("shutdownOutput", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("shutdownOutput", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1129,11 +1129,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public String toString() {
-            log.debug("toString");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.toString();
             } catch (RuntimeException e) {
-                log.debug("toString", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1141,11 +1141,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean isConnected() {
-            log.debug("isConnected");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.isConnected();
             } catch (RuntimeException e) {
-                log.debug("isConnected", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1153,11 +1153,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean isBound() {
-            log.debug("isBound");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.isBound();
             } catch (RuntimeException e) {
-                log.debug("isBound", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1165,11 +1165,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean isClosed() {
-            log.debug("isClosed");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.isClosed();
             } catch (RuntimeException e) {
-                log.debug("isClosed", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1177,11 +1177,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean isInputShutdown() {
-            log.debug("isInputShutdown");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.isInputShutdown();
             } catch (RuntimeException e) {
-                log.debug("isInputShutdown", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1189,11 +1189,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean isOutputShutdown() {
-            log.debug("isOutputShutdown");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 return inner.isOutputShutdown();
             } catch (RuntimeException e) {
-                log.debug("isOutputShutdown", e);
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
@@ -1201,11 +1201,246 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setPerformancePreferences(int connectionTime, int latency, int bandwidth) {
-            log.debug("setPerformancePreferences");
+            log.debug("[" + this.hashCode() + "]");
             try {
                 inner.setPerformancePreferences(connectionTime, latency, bandwidth);
             } catch (RuntimeException e) {
-                log.debug("setPerformancePreferences", e);
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+    }
+
+
+    private static class DebugInputStream extends InputStream {
+
+        private static final Log log = LogFactory.getLog(DebugInputStream.class);
+
+        private final InputStream inner;
+
+
+        public DebugInputStream(InputStream inner) {
+            this.inner = inner;
+            log.debug("DebugInputStream [" + this.hashCode() +
+                    "], inner InputStream [" + inner.hashCode() +
+                    "]");
+        }
+
+
+        @Override
+        public int read() throws IOException {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                return inner.read();
+            } catch (IOException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+
+
+        @Override
+        public int read(byte[] b) throws IOException {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                return inner.read(b);
+            } catch (IOException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                return inner.read(b, off, len);
+            } catch (IOException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+
+
+        @Override
+        public long skip(long n) throws IOException {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                return inner.skip(n);
+            } catch (IOException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+
+
+        @Override
+        public int available() throws IOException {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                return inner.available();
+            } catch (IOException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+
+
+        @Override
+        public void close() throws IOException {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                inner.close();
+            } catch (IOException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+
+
+        @Override
+        public synchronized void mark(int readlimit) {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                inner.mark(readlimit);
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+
+
+        @Override
+        public synchronized void reset() throws IOException {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                inner.reset();
+            } catch (IOException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+
+
+        @Override
+        public boolean markSupported() {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                return inner.markSupported();
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+    }
+
+
+    private static class DebugOutputStream extends OutputStream {
+
+        private static final Log log = LogFactory.getLog(DebugInputStream.class);
+
+        private final OutputStream inner;
+
+
+        public DebugOutputStream(OutputStream inner) {
+            this.inner = inner;
+            log.debug("DebugOutputStream [" + this.hashCode() +
+                    "], inner OutputStream [" + inner.hashCode() +
+                    "]");
+        }
+
+
+        @Override
+        public void write(int b) throws IOException {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                inner.write(b);
+            } catch (IOException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+
+
+        @Override
+        public void write(byte[] b) throws IOException {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                inner.write(b);
+            } catch (IOException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                inner.write(b, off, len);
+            } catch (IOException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+
+
+        @Override
+        public void flush() throws IOException {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                inner.flush();
+            } catch (IOException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            log.debug("[" + this.hashCode() + "]");
+            try {
+                inner.close();
+            } catch (IOException e) {
+                log.debug("[" + this.hashCode() + "]", e);
+                throw e;
+            } catch (RuntimeException e) {
+                log.debug("[" + this.hashCode() + "]", e);
                 throw e;
             }
         }
