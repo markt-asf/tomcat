@@ -17,15 +17,18 @@
 
 package org.apache.tomcat.util.net;
 
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.SocketImpl;
 import java.nio.channels.SocketChannel;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -615,6 +618,80 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
     }
 
 
+    private static final Field FIELD_SOCKET_IMPL;
+    private static final Field FIELD_FD;
+    private static final Field FIELD_FD_INT;
+    private static final Field FIELD_FD_LOCK;
+    private static final Field FIELD_FD_USECOUNT;
+
+    static {
+        Field impl = null;
+        Field fd = null;
+        Field fdInt = null;
+        Field fdLock = null;
+        Field fdUseCount = null;
+
+        try {
+            impl = Socket.class.getDeclaredField("impl");
+            impl.setAccessible(true);
+
+            fd = SocketImpl.class.getDeclaredField("fd");
+            fd.setAccessible(true);
+
+            fdInt = FileDescriptor.class.getDeclaredField("fd");
+            fdInt.setAccessible(true);
+
+            Class<?> clazz = Class.forName("java.net.AbstractPlainSocketImpl");
+            fdLock = clazz.getDeclaredField("fdLock");
+            fdLock.setAccessible(true);
+            fdUseCount = clazz.getDeclaredField("fdUseCount");
+            fdUseCount.setAccessible(true);
+
+
+        } catch (NoSuchFieldException e) {
+            log.error("Reflection failed", e);
+        } catch (SecurityException e) {
+            log.error("Reflection failed", e);
+        } catch (ClassNotFoundException e) {
+            log.error("Reflection failed", e);
+        }
+
+        FIELD_SOCKET_IMPL = impl;
+        FIELD_FD = fd;
+        FIELD_FD_INT = fdInt;
+        FIELD_FD_LOCK = fdLock;
+        FIELD_FD_USECOUNT = fdUseCount;
+    }
+
+
+    public static String getFdInfo(Socket socket) {
+        StringBuilder sb = new StringBuilder(64);
+
+        try {
+            Object impl = FIELD_SOCKET_IMPL.get(socket);
+            if (impl != null) {
+                Object lock = FIELD_FD_LOCK.get(impl);
+                if (lock != null) {
+                    synchronized (lock) {
+                        Object fd = FIELD_FD.get(impl);
+                        if (fd != null) {
+                            sb.append(FIELD_FD_INT.getInt(fd));
+                            sb.append('|');
+                            sb.append(FIELD_FD_USECOUNT.getInt(impl));
+                        }
+                    }
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            log.error("Reflection failed", e);
+        } catch (IllegalAccessException e) {
+            log.error("Reflection failed", e);
+        }
+
+        return sb.toString();
+    }
+
+
     private static class DebugSocket extends Socket {
 
         private static final Log log = LogFactory.getLog(DebugSocket.class);
@@ -625,22 +702,22 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
         public DebugSocket(Socket inner) {
             this.inner = inner;
             log.debug("DebugSocket [" + this.hashCode() +
-                    "], inner Socket [" + inner.hashCode() +
+                    "] inner Socket [" + inner.hashCode() +
                     "] for client port [" + inner.getPort() +
-                    "]");
+                    "] with fd [" + getFdInfo(inner) + "]");
         }
 
 
         @Override
         public void connect(SocketAddress endpoint) throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.connect(endpoint);
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -648,14 +725,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void connect(SocketAddress endpoint, int timeout) throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.connect(endpoint, timeout);
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -663,14 +740,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void bind(SocketAddress bindpoint) throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.bind(bindpoint);
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -678,11 +755,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public InetAddress getInetAddress() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getInetAddress();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -690,11 +767,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public InetAddress getLocalAddress() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getLocalAddress();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -702,11 +779,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public int getPort() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getPort();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -714,11 +791,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public int getLocalPort() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getLocalPort();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -726,11 +803,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public SocketAddress getRemoteSocketAddress() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getRemoteSocketAddress();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -738,11 +815,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public SocketAddress getLocalSocketAddress() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getLocalSocketAddress();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -750,11 +827,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public SocketChannel getChannel() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getChannel();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -762,14 +839,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public InputStream getInputStream() throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
-                return new DebugInputStream(inner.getInputStream());
+                return new DebugInputStream(inner);
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -777,18 +854,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public OutputStream getOutputStream() throws IOException {
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
-                OutputStream os = inner.getOutputStream();
-                log.debug("DebugSocket [" + this.hashCode() +
-                        "], inner Socket [" + inner.hashCode() +
-                        "] has OutputStream [" + os.hashCode() +
-                        "]");
-                return new DebugOutputStream(os);
+                return new DebugOutputStream(inner);
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -796,14 +869,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setTcpNoDelay(boolean on) throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.setTcpNoDelay(on);
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -811,14 +884,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean getTcpNoDelay() throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getTcpNoDelay();
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -826,14 +899,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setSoLinger(boolean on, int linger) throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.setSoLinger(on, linger);
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -841,14 +914,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public int getSoLinger() throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getSoLinger();
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -856,14 +929,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void sendUrgentData(int data) throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.sendUrgentData(data);
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -871,14 +944,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setOOBInline(boolean on) throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.setOOBInline(on);
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -886,14 +959,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean getOOBInline() throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getOOBInline();
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -901,14 +974,16 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized void setSoTimeout(int timeout) throws SocketException {
-            log.debug("[" + this.hashCode() + "], timeout [" + timeout + "]");
+            log.debug("[" + this.hashCode() +
+                    "] with fd [" + getFdInfo(inner) +
+                    "] timeout [" + timeout + "]");
             try {
                 inner.setSoTimeout(timeout);
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -916,14 +991,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized int getSoTimeout() throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getSoTimeout();
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -931,14 +1006,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized void setSendBufferSize(int size) throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.setSendBufferSize(size);
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -946,14 +1021,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized int getSendBufferSize() throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getSendBufferSize();
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -961,14 +1036,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized void setReceiveBufferSize(int size) throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.setReceiveBufferSize(size);
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -976,14 +1051,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized int getReceiveBufferSize() throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getReceiveBufferSize();
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -991,14 +1066,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setKeepAlive(boolean on) throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.setKeepAlive(on);
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1006,14 +1081,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean getKeepAlive() throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getKeepAlive();
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1021,14 +1096,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setTrafficClass(int tc) throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.setTrafficClass(tc);
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1036,14 +1111,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public int getTrafficClass() throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getTrafficClass();
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1051,14 +1126,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setReuseAddress(boolean on) throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.setReuseAddress(on);
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1066,14 +1141,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean getReuseAddress() throws SocketException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.getReuseAddress();
             } catch (SocketException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1082,16 +1157,17 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
         @Override
         public synchronized void close() throws IOException {
             log.debug("close [" + this.hashCode() +
-                    "], inner Socket [" + inner.hashCode() +
+                    "] inner Socket [" + inner.hashCode() +
+                    "] with fd [" + getFdInfo(inner) +
                     "]", new Exception());
             log.debug("bind");
             try {
                 inner.close();
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1099,14 +1175,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void shutdownInput() throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.shutdownInput();
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1114,14 +1190,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void shutdownOutput() throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.shutdownOutput();
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1129,11 +1205,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public String toString() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.toString();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1141,11 +1217,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean isConnected() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.isConnected();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1153,11 +1229,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean isBound() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.isBound();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1165,11 +1241,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean isClosed() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.isClosed();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1177,11 +1253,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean isInputShutdown() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.isInputShutdown();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1189,11 +1265,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean isOutputShutdown() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 return inner.isOutputShutdown();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1201,11 +1277,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void setPerformancePreferences(int connectionTime, int latency, int bandwidth) {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]");
             try {
                 inner.setPerformancePreferences(connectionTime, latency, bandwidth);
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(inner) + "]", e);
                 throw e;
             }
         }
@@ -1216,27 +1292,30 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         private static final Log log = LogFactory.getLog(DebugInputStream.class);
 
+        private final Socket innerSocket;
         private final InputStream inner;
 
 
-        public DebugInputStream(InputStream inner) {
-            this.inner = inner;
+        public DebugInputStream(Socket innerSocket) throws IOException {
+            this.innerSocket = innerSocket;
+            this.inner = innerSocket.getInputStream();
             log.debug("DebugInputStream [" + this.hashCode() +
-                    "], inner InputStream [" + inner.hashCode() +
+                    "] inner InputStream [" + inner.hashCode() +
+                    "] with fd [" + getFdInfo(innerSocket) +
                     "]");
         }
 
 
         @Override
         public int read() throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 return inner.read();
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
@@ -1244,14 +1323,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public int read(byte[] b) throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 return inner.read(b);
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
@@ -1259,14 +1338,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 return inner.read(b, off, len);
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
@@ -1274,14 +1353,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public long skip(long n) throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 return inner.skip(n);
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
@@ -1289,14 +1368,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public int available() throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 return inner.available();
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
@@ -1304,14 +1383,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void close() throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 inner.close();
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
@@ -1319,11 +1398,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized void mark(int readlimit) {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 inner.mark(readlimit);
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
@@ -1331,14 +1410,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public synchronized void reset() throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 inner.reset();
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
@@ -1346,11 +1425,11 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public boolean markSupported() {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 return inner.markSupported();
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
@@ -1361,27 +1440,30 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         private static final Log log = LogFactory.getLog(DebugInputStream.class);
 
+        private final Socket innerSocket;
         private final OutputStream inner;
 
 
-        public DebugOutputStream(OutputStream inner) {
-            this.inner = inner;
+        public DebugOutputStream(Socket innerSocket) throws IOException {
+            this.innerSocket = innerSocket;
+            this.inner = innerSocket.getOutputStream();
             log.debug("DebugOutputStream [" + this.hashCode() +
-                    "], inner OutputStream [" + inner.hashCode() +
+                    "] inner OutputStream [" + inner.hashCode() +
+                    "] with fd [" + getFdInfo(innerSocket) +
                     "]");
         }
 
 
         @Override
         public void write(int b) throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 inner.write(b);
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
@@ -1389,14 +1471,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void write(byte[] b) throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 inner.write(b);
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
@@ -1404,14 +1486,14 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 inner.write(b, off, len);
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
@@ -1419,28 +1501,28 @@ public class JIoEndpoint extends AbstractEndpoint<Socket> {
 
         @Override
         public void flush() throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 inner.flush();
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
 
         @Override
         public void close() throws IOException {
-            log.debug("[" + this.hashCode() + "]");
+            log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]");
             try {
                 inner.close();
             } catch (IOException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             } catch (RuntimeException e) {
-                log.debug("[" + this.hashCode() + "]", e);
+                log.debug("[" + this.hashCode() + "] with fd [" + getFdInfo(innerSocket) + "]", e);
                 throw e;
             }
         }
