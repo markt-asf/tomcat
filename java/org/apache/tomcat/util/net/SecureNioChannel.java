@@ -786,6 +786,9 @@ public class SecureNioChannel extends NioChannel {
      */
     @Override
     public int write(ByteBuffer src) throws IOException {
+
+        log.info("Writing [" + src.remaining() + "] application bytes");
+
         checkInterruptStatus();
         if (src == this.netOutBuffer) {
             //we can get here through a recursive call
@@ -811,6 +814,9 @@ public class SecureNioChannel extends NioChannel {
             int written = result.bytesConsumed();
             netOutBuffer.flip();
 
+            log.info("TLS wrap consumed [" + written + "] application bytes");
+            log.info("TLS wrap created [" + netOutBuffer.remaining() + "] network bytes");
+
             if (result.getStatus() == Status.OK) {
                 if (result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
                     tasks();
@@ -820,7 +826,9 @@ public class SecureNioChannel extends NioChannel {
             }
 
             // Force a flush
+            log.info("Flushing TLS network bytes");
             flush(netOutBuffer);
+            log.info("Completed write of TLS network bytes");
 
             return written;
         }
