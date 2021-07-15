@@ -787,13 +787,15 @@ public class SecureNioChannel extends NioChannel {
     @Override
     public int write(ByteBuffer src) throws IOException {
 
-        log.info("Writing [" + src.remaining() + "] application bytes");
+        log.info("BZ-65448-01 : " + src.remaining() + " : " + netOutBuffer.remaining());
 
         checkInterruptStatus();
         if (src == this.netOutBuffer) {
             //we can get here through a recursive call
             //by using the NioBlockingSelector
+            log.info("BZ-65448-05 : " + netOutBuffer.remaining());
             int written = sc.write(src);
+            log.info("BZ-65448-06 : " + written);
             return written;
         } else {
             // Are we closing or closed?
@@ -802,6 +804,7 @@ public class SecureNioChannel extends NioChannel {
             }
 
             if (!flush(netOutBuffer)) {
+                log.info("BZ-65448-07 : " + netOutBuffer.remaining());
                 // We haven't emptied out the buffer yet
                 return 0;
             }
@@ -814,8 +817,7 @@ public class SecureNioChannel extends NioChannel {
             int written = result.bytesConsumed();
             netOutBuffer.flip();
 
-            log.info("TLS wrap consumed [" + written + "] application bytes");
-            log.info("TLS wrap created [" + netOutBuffer.remaining() + "] network bytes");
+            log.info("BZ-65448-02 : " + written);
 
             if (result.getStatus() == Status.OK) {
                 if (result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
@@ -826,9 +828,9 @@ public class SecureNioChannel extends NioChannel {
             }
 
             // Force a flush
-            log.info("Flushing TLS network bytes");
+            log.info("BZ-65448-03 : " + netOutBuffer.remaining());
             flush(netOutBuffer);
-            log.info("Completed write of TLS network bytes");
+            log.info("BZ-65448-04 : " + netOutBuffer.remaining());
 
             return written;
         }
