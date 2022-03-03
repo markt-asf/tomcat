@@ -17,6 +17,7 @@
 package org.apache.tomcat.websocket.server;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +38,9 @@ import jakarta.websocket.Extension;
 import jakarta.websocket.HandshakeResponse;
 import jakarta.websocket.server.ServerEndpointConfig;
 
+import javassist.util.proxy.MethodFilter;
+import javassist.util.proxy.ProxyFactory;
+
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.apache.tomcat.util.res.StringManager;
 import org.apache.tomcat.util.security.ConcurrentMessageDigest;
@@ -54,6 +58,8 @@ public class UpgradeUtil {
     private static final byte[] WS_ACCEPT =
             "258EAFA5-E914-47DA-95CA-C5AB0DC85B11".getBytes(
                     StandardCharsets.ISO_8859_1);
+    private static final MethodFilter PER_SESSION_USER_PROPERTIES_METHOD_FILTER =
+            new WsPerSessionUserPropertiesMethodFilter();
 
     private UpgradeUtil() {
         // Utility class. Hide default constructor.
@@ -219,8 +225,19 @@ public class UpgradeUtil {
             }
         }
 
-        WsPerSessionServerEndpointConfig perSessionServerEndpointConfig =
-                new WsPerSessionServerEndpointConfig(sec);
+        ProxyFactory factory = new ProxyFactory();
+        factory.setSuperclass(sec.getClass());
+        factory.setFilter(PER_SESSION_USER_PROPERTIES_METHOD_FILTER);
+
+        ServerEndpointConfig perSessionServerEndpointConfig;
+        try {
+            perSessionServerEndpointConfig = (ServerEndpointConfig) factory.create(
+                    new Class<?>[0], new Object[0], new WsPerSessionUserPropertiesMethodHandler(sec));
+        } catch (NoSuchMethodException | IllegalArgumentException | InstantiationException | IllegalAccessException
+                | InvocationTargetException e) {
+            // Should never happen
+            throw new IllegalStateException(e);
+        }
 
         WsHandshakeRequest wsRequest = new WsHandshakeRequest(req, pathParams);
         WsHandshakeResponse wsResponse = new WsHandshakeResponse();

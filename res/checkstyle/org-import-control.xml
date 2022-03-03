@@ -188,6 +188,7 @@
         <allow pkg="jakarta.servlet"/>
         <allow pkg="org.apache.coyote.http11.upgrade"/>
         <allow pkg="org.apache.tomcat.websocket"/>
+        <allow pkg="javassist.util.proxy"/>
       </subpackage>
     </subpackage>
   </subpackage>
