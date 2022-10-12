@@ -79,7 +79,7 @@ public abstract class AbstractHttp11Processor extends AbstractProcessor {
     /**
      * Input.
      */
-    private final Http11InputBuffer inputBuffer;
+    private final AbstractHttp11InputBuffer inputBuffer;
 
 
     /**
@@ -155,8 +155,7 @@ public abstract class AbstractHttp11Processor extends AbstractProcessor {
         httpParser = new HttpParser(protocol.getRelaxedPathChars(),
                 protocol.getRelaxedQueryChars());
 
-        inputBuffer = new Http11InputBuffer(request, protocol.getMaxHttpRequestHeaderSize(),
-                protocol.getRejectIllegalHeader(), httpParser);
+        inputBuffer = createInputBuffer(request, protocol, httpParser);
         request.setInputBuffer(inputBuffer);
 
         outputBuffer = new Http11OutputBuffer(response, protocol.getMaxHttpResponseHeaderSize());
@@ -185,6 +184,10 @@ public abstract class AbstractHttp11Processor extends AbstractProcessor {
 
         pluggableFilterIndex = inputBuffer.getFilters().length;
     }
+
+
+    protected abstract AbstractHttp11InputBuffer createInputBuffer(Request request,
+            AbstractHttp11Protocol<?> protocol, HttpParser httpParser);
 
 
     /**

@@ -17,8 +17,10 @@
 package org.apache.coyote.http11;
 
 import org.apache.coyote.Adapter;
+import org.apache.coyote.Request;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
+import org.apache.tomcat.util.http.parser.HttpParser;
 
 public class Http11Processor extends AbstractHttp11Processor {
 
@@ -27,6 +29,14 @@ public class Http11Processor extends AbstractHttp11Processor {
 
     public Http11Processor(AbstractHttp11Protocol<?> protocol, Adapter adapter) {
         super(protocol, adapter);
+    }
+
+
+    @Override
+    protected AbstractHttp11InputBuffer createInputBuffer(Request request, AbstractHttp11Protocol<?> protocol,
+            HttpParser httpParser) {
+        return new Http11InputBuffer(request, protocol.getMaxHttpRequestHeaderSize(),
+                protocol.getRejectIllegalHeader(), httpParser);
     }
 
 

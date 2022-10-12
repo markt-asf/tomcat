@@ -35,13 +35,9 @@ import org.apache.tomcat.util.net.ApplicationBufferHandler;
 import org.apache.tomcat.util.net.SocketWrapperBase;
 import org.apache.tomcat.util.res.StringManager;
 
-/**
- * InputBuffer for HTTP that provides request header parsing as well as transfer
- * encoding.
- */
-public class Http11InputBuffer extends AbstractHttp11InputBuffer {
+public class Http11LoomInputBuffer extends AbstractHttp11InputBuffer {
 
-    private static final Log log = LogFactory.getLog(Http11InputBuffer.class);
+    private static final Log log = LogFactory.getLog(Http11LoomInputBuffer.class);
 
 
     /**
@@ -152,7 +148,7 @@ public class Http11InputBuffer extends AbstractHttp11InputBuffer {
 
     // ----------------------------------------------------------- Constructors
 
-    public Http11InputBuffer(Request request, int headerBufferSize,
+    public Http11LoomInputBuffer(Request request, int headerBufferSize,
             boolean rejectIllegalHeader, HttpParser httpParser) {
 
         this.request = request;
