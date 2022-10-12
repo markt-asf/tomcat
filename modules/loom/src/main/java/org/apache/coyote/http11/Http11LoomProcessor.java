@@ -17,10 +17,21 @@
 package org.apache.coyote.http11;
 
 import org.apache.coyote.Adapter;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 
-public class Http11LoomProcessor extends Http11Processor {
+public class Http11LoomProcessor extends AbstractHttp11Processor {
+
+    private static final Log log = LogFactory.getLog(Http11LoomProcessor.class);
+
 
     public Http11LoomProcessor(AbstractHttp11Protocol<?> protocol, Adapter adapter) {
         super(protocol, adapter);
+    }
+
+
+    @Override
+    protected Log getLog() {
+        return log;
     }
 }
