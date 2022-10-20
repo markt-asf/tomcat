@@ -18,18 +18,13 @@ package org.apache.coyote.http11;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-
 import org.apache.coyote.CloseNowException;
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.Request;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
-import org.apache.tomcat.util.buf.MessageBytes;
 import org.apache.tomcat.util.http.HeaderUtil;
-import org.apache.tomcat.util.http.MimeHeaders;
 import org.apache.tomcat.util.http.parser.HttpParser;
 import org.apache.tomcat.util.net.ApplicationBufferHandler;
 import org.apache.tomcat.util.net.SocketWrapperBase;
@@ -50,264 +45,25 @@ public class Http11LoomInputBuffer extends AbstractHttp11InputBuffer {
     private static final StringManager sm = StringManager.getManager(Http11LoomInputBuffer.class);
 
 
-    private static final byte[] CLIENT_PREFACE_START =
-            "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n".getBytes(StandardCharsets.ISO_8859_1);
-
-    /**
-     * Associated Coyote request.
-     */
-    private final Request request;
-
-
-    /**
-     * Headers of the associated request.
-     */
-    private final MimeHeaders headers;
-
-
-    private final boolean rejectIllegalHeader;
-
-    /**
-     * State.
-     */
-    private volatile boolean parsingHeader;
-
-
-    /**
-     * Swallow input ? (in the case of an expectation)
-     */
-    private boolean swallowInput;
-
-
-    /**
-     * The read buffer.
-     */
-    private ByteBuffer byteBuffer;
-
-
-    /**
-     * Pos of the end of the header in the buffer, which is also the
-     * start of the body.
-     */
-    private int end;
-
-
-    /**
-     * Wrapper that provides access to the underlying socket.
-     */
-    private SocketWrapperBase<?> wrapper;
-
-
-    /**
-     * Underlying input buffer.
-     */
-    private InputBuffer inputStreamInputBuffer;
-
-
-    /**
-     * Filter library.
-     * Note: Filter[Constants.CHUNKED_FILTER] is always the "chunked" filter.
-     */
-    private InputFilter[] filterLibrary;
-
-
-    /**
-     * Active filters (in order).
-     */
-    private InputFilter[] activeFilters;
-
-
-    /**
-     * Index of the last active filter.
-     */
-    private int lastActiveFilter;
-
-
-    /**
-     * Parsing state - used for non blocking parsing so that
-     * when more data arrives, we can pick up where we left off.
-     */
-    private byte prevChr = 0;
-    private byte chr = 0;
-    // This is only used for HTTP/2 preface detection
-    private int parsingRequestLinePhase = 0;
-    private final HeaderParseData headerData = new HeaderParseData();
-    private final HttpParser httpParser;
-
-    /**
-     * Maximum allowed size of the HTTP request line plus headers plus any
-     * leading blank lines.
-     */
-    private final int headerBufferSize;
-
-    /**
-     * Known size of the NioChannel read buffer.
-     */
-    private int socketReadBufferSize;
-
-
     // ----------------------------------------------------------- Constructors
 
     public Http11LoomInputBuffer(Request request, int headerBufferSize,
             boolean rejectIllegalHeader, HttpParser httpParser) {
 
-        this.request = request;
-        headers = request.getMimeHeaders();
-
-        this.headerBufferSize = headerBufferSize;
-        this.rejectIllegalHeader = rejectIllegalHeader;
-        this.httpParser = httpParser;
-
-        filterLibrary = new InputFilter[0];
-        activeFilters = new InputFilter[0];
-        lastActiveFilter = -1;
-
-        parsingHeader = true;
-        parsingRequestLinePhase = 0;
-        swallowInput = true;
+        super(request, headerBufferSize, rejectIllegalHeader, httpParser);
 
         inputStreamInputBuffer = new SocketInputBuffer();
     }
 
 
-    // ------------------------------------------------------------- Properties
-
-    /**
-     * Add an input filter to the filter library.
-     *
-     * @throws NullPointerException if the supplied filter is null
-     */
-    @Override
-    protected void addFilter(InputFilter filter) {
-
-        if (filter == null) {
-            throw new NullPointerException(sm.getString("iib.filter.npe"));
-        }
-
-        InputFilter[] newFilterLibrary = Arrays.copyOf(filterLibrary, filterLibrary.length + 1);
-        newFilterLibrary[filterLibrary.length] = filter;
-        filterLibrary = newFilterLibrary;
-
-        activeFilters = new InputFilter[filterLibrary.length];
-    }
-
-
-    /**
-     * Get filters.
-     */
-    @Override
-    protected InputFilter[] getFilters() {
-        return filterLibrary;
-    }
-
-
-    /**
-     * Add an input filter to the filter library.
-     */
-    @Override
-    protected void addActiveFilter(InputFilter filter) {
-
-        if (lastActiveFilter == -1) {
-            filter.setBuffer(inputStreamInputBuffer);
-        } else {
-            for (int i = 0; i <= lastActiveFilter; i++) {
-                if (activeFilters[i] == filter) {
-                    return;
-                }
-            }
-            filter.setBuffer(activeFilters[lastActiveFilter]);
-        }
-
-        activeFilters[++lastActiveFilter] = filter;
-
-        filter.setRequest(request);
-    }
-
-
-    /**
-     * Set the swallow input flag.
-     */
-    @Override
-    protected void setSwallowInput(boolean swallowInput) {
-        this.swallowInput = swallowInput;
-    }
-
-
-    // ---------------------------------------------------- InputBuffer Methods
-
-    @Override
-    public int doRead(ApplicationBufferHandler handler) throws IOException {
-        if (lastActiveFilter == -1) {
-            return inputStreamInputBuffer.doRead(handler);
-        } else {
-            return activeFilters[lastActiveFilter].doRead(handler);
-        }
-    }
-
-
     // ------------------------------------------------------- Protected Methods
 
-    /**
-     * Recycle the input buffer. This should be called when closing the
-     * connection.
-     */
     @Override
     protected void recycle() {
-        wrapper = null;
-        request.recycle();
-
-        for (int i = 0; i <= lastActiveFilter; i++) {
-            activeFilters[i].recycle();
-        }
-
-        byteBuffer.limit(0).position(0);
-        lastActiveFilter = -1;
-        swallowInput = true;
-
-        chr = 0;
-        prevChr = 0;
-        parsingRequestLinePhase = 0;
-        headerData.recycle();
-        // Recycled last because it is volatile
-        // All variables visible to this thread are guaranteed to be visible to
-        // any other thread once that thread reads the same volatile. The first
-        // action when parsing input data is to read this volatile.
+        super.recycle();
+        // Recycled separately because other implementations need to control the
+        // timing of recycling the volatiles.
         parsingHeader = true;
-    }
-
-
-    /**
-     * End processing of current HTTP request.
-     * Note: All bytes of the current request should have been already
-     * consumed. This method only resets all the pointers so that we are ready
-     * to parse the next HTTP request.
-     */
-    @Override
-    protected void nextRequest() {
-        request.recycle();
-
-        if (byteBuffer.position() > 0) {
-            if (byteBuffer.remaining() > 0) {
-                // Copy leftover bytes to the beginning of the buffer
-                byteBuffer.compact();
-                byteBuffer.flip();
-            } else {
-                // Reset position and limit to 0
-                byteBuffer.position(0).limit(0);
-            }
-        }
-
-        // Recycle filters
-        for (int i = 0; i <= lastActiveFilter; i++) {
-            activeFilters[i].recycle();
-        }
-
-        // Reset pointers
-        lastActiveFilter = -1;
-        parsingHeader = true;
-        swallowInput = true;
-
-        parsingRequestLinePhase = 0;
     }
 
 
@@ -529,83 +285,6 @@ public class Http11LoomInputBuffer extends AbstractHttp11InputBuffer {
 
 
     /**
-     * Parse the HTTP headers.
-     */
-    @Override
-    protected boolean parseHeaders() throws IOException {
-        if (!parsingHeader) {
-            throw new IllegalStateException(sm.getString("iib.parseheaders.ise.error"));
-        }
-
-        HeaderParseStatus status = HeaderParseStatus.HAVE_MORE_HEADERS;
-
-        do {
-            status = parseHeader();
-            // Checking that
-            // (1) Headers plus request line size does not exceed its limit
-            // (2) There are enough bytes to avoid expanding the buffer when
-            // reading body
-            // Technically, (2) is technical limitation, (1) is logical
-            // limitation to enforce the meaning of headerBufferSize
-            // From the way how buf is allocated and how blank lines are being
-            // read, it should be enough to check (1) only.
-            if (byteBuffer.position() > headerBufferSize || byteBuffer.capacity() - byteBuffer.position() < socketReadBufferSize) {
-                throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
-            }
-        } while (status == HeaderParseStatus.HAVE_MORE_HEADERS);
-        if (status == HeaderParseStatus.DONE) {
-            parsingHeader = false;
-            end = byteBuffer.position();
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-
-    @Override
-    protected int getParsingRequestLinePhase() {
-        return parsingRequestLinePhase;
-    }
-
-
-    private String parseInvalid(int startPos, ByteBuffer buffer) {
-        // Look for the next space
-        byte b = 0;
-        while (buffer.hasRemaining() && b != 0x20) {
-            b = buffer.get();
-        }
-        String result = HeaderUtil.toPrintableString(buffer.array(), buffer.arrayOffset() + startPos, buffer.position() - startPos);
-        if (b != 0x20) {
-            // Ran out of buffer rather than found a space
-            result = result + "...";
-        }
-        return result;
-    }
-
-
-    /**
-     * End request (consumes leftover bytes).
-     *
-     * @throws IOException an underlying I/O error occurred
-     */
-    @Override
-    protected void endRequest() throws IOException {
-
-        if (swallowInput && (lastActiveFilter != -1)) {
-            int extraBytes = (int) activeFilters[lastActiveFilter].end();
-            byteBuffer.position(byteBuffer.position() - extraBytes);
-        }
-    }
-
-
-    @Override
-    public int available() {
-        return available(false);
-    }
-
-
-    /**
      * Available bytes in the buffers for the current request.
      *
      * Note that when requests are pipelined, the data in byteBuffer may relate
@@ -639,8 +318,8 @@ public class Http11LoomInputBuffer extends AbstractHttp11InputBuffer {
                 available = byteBuffer.remaining();
             }
         } catch (IOException ioe) {
-            if (getLog().isDebugEnabled()) {
-                getLog().debug(sm.getString("iib.available.readFail"), ioe);
+            if (log.isDebugEnabled()) {
+                log.debug(sm.getString("iib.available.readFail"), ioe);
             }
             // Not ideal. This will indicate that data is available which should
             // trigger a read which in turn will trigger another IOException and
@@ -651,63 +330,6 @@ public class Http11LoomInputBuffer extends AbstractHttp11InputBuffer {
     }
 
 
-    /**
-     * Has all of the request body been read? There are subtle differences
-     * between this and available() &gt; 0 primarily because of having to handle
-     * faking non-blocking reads with the blocking IO connector.
-     */
-    @Override
-    protected boolean isFinished() {
-        // The active filters have the definitive information on whether or not
-        // the current request body has been read. Note that byteBuffer may
-        // contain pipelined data so is not a good indicator.
-        if (lastActiveFilter >= 0) {
-            return activeFilters[lastActiveFilter].isFinished();
-        } else {
-            // No filters. Assume request is not finished. EOF will signal end of
-            // request.
-            return false;
-        }
-    }
-
-    @Override
-    protected ByteBuffer getLeftover() {
-        int available = byteBuffer.remaining();
-        if (available > 0) {
-            return ByteBuffer.wrap(byteBuffer.array(), byteBuffer.position(), available);
-        } else {
-            return null;
-        }
-    }
-
-
-    @Override
-    protected boolean isChunking() {
-        for (int i = 0; i < lastActiveFilter; i++) {
-            if (activeFilters[i] == filterLibrary[Constants.CHUNKED_FILTER]) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
-    @Override
-    protected void init(SocketWrapperBase<?> socketWrapper) {
-
-        wrapper = socketWrapper;
-        wrapper.setAppReadBufHandler(this);
-
-        int bufLength = headerBufferSize +
-                wrapper.getSocketBufferHandler().getReadBuffer().capacity();
-        if (byteBuffer == null || byteBuffer.capacity() < bufLength) {
-            byteBuffer = ByteBuffer.allocate(bufLength);
-            byteBuffer.position(0).limit(0);
-        }
-    }
-
-
-
     // --------------------------------------------------------- Private Methods
 
     /**
@@ -715,8 +337,8 @@ public class Http11LoomInputBuffer extends AbstractHttp11InputBuffer {
      */
     private void fill() throws IOException {
 
-        if (getLog().isDebugEnabled()) {
-            getLog().debug("Before fill(): parsingHeader: [" + parsingHeader +
+        if (log.isDebugEnabled()) {
+            log.debug("Before fill(): parsingHeader: [" + parsingHeader +
                     "], byteBuffer.position(): [" + byteBuffer.position() +
                     "], byteBuffer.limit(): [" + byteBuffer.limit() +
                     "], end: [" + end + "]");
@@ -763,8 +385,8 @@ public class Http11LoomInputBuffer extends AbstractHttp11InputBuffer {
             }
         }
 
-        if (getLog().isDebugEnabled()) {
-            getLog().debug("Received ["
+        if (log.isDebugEnabled()) {
+            log.debug("Received ["
                     + new String(byteBuffer.array(), byteBuffer.position(), byteBuffer.remaining(), StandardCharsets.ISO_8859_1) + "]");
         }
 
@@ -774,14 +396,8 @@ public class Http11LoomInputBuffer extends AbstractHttp11InputBuffer {
     }
 
 
-    /**
-     * Parse an HTTP header.
-     *
-     * @return One of {@link HeaderParseStatus#NEED_MORE_DATA},
-     * {@link HeaderParseStatus#HAVE_MORE_HEADERS} or
-     * {@link HeaderParseStatus#DONE}.
-     */
-    private HeaderParseStatus parseHeader() throws IOException {
+    @Override
+    protected HeaderParseStatus parseHeader() throws IOException {
 
         while (true) {
 
@@ -978,75 +594,21 @@ public class Http11LoomInputBuffer extends AbstractHttp11InputBuffer {
                 headerData.lastSignificantChar = pos;
             }
         }
-        if (rejectThisHeader || getLog().isDebugEnabled()) {
+        if (rejectThisHeader || log.isDebugEnabled()) {
             String message = sm.getString("iib.invalidheader",
                     HeaderUtil.toPrintableString(byteBuffer.array(), headerData.lineStart,
                             headerData.lastSignificantChar - headerData.lineStart + 1));
             if (rejectThisHeader) {
                 throw new IllegalArgumentException(message);
             }
-            getLog().debug(message);
+            log.debug(message);
         }
 
         return HeaderParseStatus.HAVE_MORE_HEADERS;
     }
 
 
-    protected Log getLog() {
-        return log;
-    }
-
-
     // ----------------------------------------------------------- Inner classes
-
-    private enum HeaderParseStatus {
-        DONE, HAVE_MORE_HEADERS, NEED_MORE_DATA
-    }
-
-
-    private static class HeaderParseData {
-        /**
-         * The first character of the header line.
-         */
-        int lineStart = 0;
-        /**
-         * When parsing header name: first character of the header.<br>
-         * When skipping broken header line: first character of the header.<br>
-         * When parsing header value: first character after ':'.
-         */
-        int start = 0;
-        /**
-         * When parsing header name: not used (stays as 0).<br>
-         * When skipping broken header line: not used (stays as 0).<br>
-         * When parsing header value: starts as the first character after ':'.
-         * Then is increased as far as more bytes of the header are harvested.
-         * Bytes from buf[pos] are copied to buf[realPos]. Thus the string from
-         * [start] to [realPos-1] is the prepared value of the header, with
-         * whitespaces removed as needed.<br>
-         */
-        int realPos = 0;
-        /**
-         * When parsing header name: not used (stays as 0).<br>
-         * When skipping broken header line: last non-CR/non-LF character.<br>
-         * When parsing header value: position after the last not-LWS character.<br>
-         */
-        int lastSignificantChar = 0;
-        /**
-         * MB that will store the value of the header. It is null while parsing
-         * header name and is created after the name has been parsed.
-         */
-        MessageBytes headerValue = null;
-        public void recycle() {
-            lineStart = 0;
-            start = 0;
-            realPos = 0;
-            lastSignificantChar = 0;
-            headerValue = null;
-        }
-    }
-
-
-    // ------------------------------------- InputStreamInputBuffer Inner Class
 
     /**
      * This class is an input buffer which will read its data from an input
@@ -1058,19 +620,7 @@ public class Http11LoomInputBuffer extends AbstractHttp11InputBuffer {
         public int doRead(ApplicationBufferHandler handler) throws IOException {
 
             if (byteBuffer.position() >= byteBuffer.limit()) {
-                // The application is reading the HTTP request body
-                // TODO: Review this for Loom
                 fill();
-                /*
-                boolean block = (request.getReadListener() == null);
-                if (!fill(block)) {
-                    if (block) {
-                        return -1;
-                    } else {
-                        return 0;
-                    }
-                }
-                */
             }
 
             int length = byteBuffer.remaining();
@@ -1084,30 +634,5 @@ public class Http11LoomInputBuffer extends AbstractHttp11InputBuffer {
         public int available() {
             return byteBuffer.remaining();
         }
-    }
-
-
-    @Override
-    public void setByteBuffer(ByteBuffer buffer) {
-        byteBuffer = buffer;
-    }
-
-
-    @Override
-    public ByteBuffer getByteBuffer() {
-        return byteBuffer;
-    }
-
-
-    @Override
-    public void expand(int size) {
-        if (byteBuffer.capacity() >= size) {
-            byteBuffer.limit(size);
-        }
-        ByteBuffer temp = ByteBuffer.allocate(size);
-        temp.put(byteBuffer);
-        byteBuffer = temp;
-        byteBuffer.mark();
-        temp = null;
     }
 }
