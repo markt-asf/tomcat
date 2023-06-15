@@ -45,6 +45,7 @@ import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 import org.apache.tomcat.util.file.ConfigFileLoader;
 import org.apache.tomcat.util.file.ConfigurationSource.Resource;
 import org.apache.tomcat.util.http.CookieProcessor;
+import org.apache.tomcat.util.http.ParameterErrorHandlingConfiguration;
 
 /**
  * A <b>Context</b> is a Container that represents a servlet context, and
@@ -2003,4 +2004,35 @@ public interface Context extends Container, ContextBind {
         return ConfigFileLoader.getSource().getResource(name);
     }
 
+
+    /**
+     * Sets the {@link ParameterErrorHandlingConfiguration} that will be used to determine how to handle any errors
+     * encountered during parameter processing for requests to this Context.
+     * <p>
+     * The default implementation throws an {@link UnsupportedOperationException}.
+     *
+     * @param parameterErrorHandlingConfiguration   The new parameter error handling configuration
+     *
+     * @throws IllegalArgumentException If a {@code null} ParameterErrorHandlingConfiguration is specified
+     *
+     */
+    default void setParameterErrorHandlingConfiguration(
+            ParameterErrorHandlingConfiguration parameterErrorHandlingConfiguration) {
+        throw new UnsupportedOperationException();
+    }
+
+
+    /**
+     * Get the {@link ParameterErrorHandlingConfiguration} that will be used to determine how to handle any errors
+     * encountered during parameter processing for requests to this Context.
+     * <p>
+     * The default implementation returns a new instance of {@link ParameterErrorHandlingConfiguration} with default
+     * settings.
+     *
+     * @return the {@link ParameterErrorHandlingConfiguration} that will be used to determine how to handle any errors
+     * encountered during parameter processing for requests to this Context.
+     */
+    default ParameterErrorHandlingConfiguration getParameterErrorHandlingConfiguration() {
+        return new ParameterErrorHandlingConfiguration();
+    }
 }

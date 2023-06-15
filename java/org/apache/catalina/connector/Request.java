@@ -104,7 +104,6 @@ import org.apache.tomcat.util.buf.UDecoder;
 import org.apache.tomcat.util.http.CookieProcessor;
 import org.apache.tomcat.util.http.FastHttpDateFormat;
 import org.apache.tomcat.util.http.Parameters;
-import org.apache.tomcat.util.http.Parameters.FailReason;
 import org.apache.tomcat.util.http.Rfc6265CookieProcessor;
 import org.apache.tomcat.util.http.ServerCookie;
 import org.apache.tomcat.util.http.ServerCookies;
@@ -2724,7 +2723,7 @@ public class Request implements HttpServletRequest {
             }
 
             if (!location.isDirectory()) {
-                parameters.setParseFailedReason(FailReason.MULTIPART_CONFIG_INVALID);
+                // TODO parameters.setParseFailedReason(FailReason.MULTIPART_CONFIG_INVALID);
                 partsParseException = new IOException(sm.getString("coyoteRequest.uploadLocationInvalid", location));
                 return;
             }
@@ -2735,7 +2734,7 @@ public class Request implements HttpServletRequest {
             try {
                 factory.setRepository(location.getCanonicalFile());
             } catch (IOException ioe) {
-                parameters.setParseFailedReason(FailReason.IO_ERROR);
+             // TODO parameters.setParseFailedReason(FailReason.IO_ERROR);
                 partsParseException = ioe;
                 return;
             }
@@ -2775,7 +2774,7 @@ public class Request implements HttpServletRequest {
                             // Value separator
                             postSize++;
                             if (postSize > maxPostSize) {
-                                parameters.setParseFailedReason(FailReason.POST_TOO_LARGE);
+                             // TODO parameters.setParseFailedReason(FailReason.POST_TOO_LARGE);
                                 throw new IllegalStateException(sm.getString("coyoteRequest.maxPostSizeExceeded"));
                             }
                         }
@@ -2791,14 +2790,14 @@ public class Request implements HttpServletRequest {
 
                 success = true;
             } catch (InvalidContentTypeException e) {
-                parameters.setParseFailedReason(FailReason.INVALID_CONTENT_TYPE);
+             // TODO parameters.setParseFailedReason(FailReason.INVALID_CONTENT_TYPE);
                 partsParseException = new ServletException(e);
             } catch (SizeException e) {
-                parameters.setParseFailedReason(FailReason.POST_TOO_LARGE);
+             // TODO parameters.setParseFailedReason(FailReason.POST_TOO_LARGE);
                 checkSwallowInput();
                 partsParseException = new IllegalStateException(e);
             } catch (IOException e) {
-                parameters.setParseFailedReason(FailReason.IO_ERROR);
+             // TODO parameters.setParseFailedReason(FailReason.IO_ERROR);
                 partsParseException = e;
             } catch (IllegalStateException e) {
                 // addParameters() will set parseFailedReason
@@ -2811,7 +2810,7 @@ public class Request implements HttpServletRequest {
             // be more efficient but it is written this way to be robust with
             // respect to changes in the remainder of the method.
             if (partsParseException != null || !success) {
-                parameters.setParseFailedReason(FailReason.UNKNOWN);
+             // TODO parameters.setParseFailedReason(FailReason.UNKNOWN);
             }
         }
     }
@@ -3059,6 +3058,8 @@ public class Request implements HttpServletRequest {
             // Note: If !useBodyEncodingForURI, the query string encoding is
             // that set towards the start of CoyoyeAdapter.service()
 
+            parameters.setErrorHandlingConfiguration(mappingData.context.getParameterErrorHandlingConfiguration());
+
             parameters.handleQueryParameters();
 
             if (usingInputStream || usingReader) {
@@ -3103,7 +3104,7 @@ public class Request implements HttpServletRequest {
                         context.getLogger().debug(sm.getString("coyoteRequest.postTooLarge"));
                     }
                     checkSwallowInput();
-                    parameters.setParseFailedReason(FailReason.POST_TOO_LARGE);
+                 // TODO parameters.setParseFailedReason(FailReason.POST_TOO_LARGE);
                     return;
                 }
                 byte[] formData = null;
@@ -3123,7 +3124,7 @@ public class Request implements HttpServletRequest {
                     if (context != null && context.getLogger().isDebugEnabled()) {
                         context.getLogger().debug(sm.getString("coyoteRequest.parseParameters"), e);
                     }
-                    parameters.setParseFailedReason(FailReason.CLIENT_DISCONNECT);
+                 // TODO parameters.setParseFailedReason(FailReason.CLIENT_DISCONNECT);
                     return;
                 }
                 parameters.processParameters(formData, 0, len);
@@ -3133,7 +3134,7 @@ public class Request implements HttpServletRequest {
                     formData = readChunkedPostBody();
                 } catch (IllegalStateException ise) {
                     // chunkedPostTooLarge error
-                    parameters.setParseFailedReason(FailReason.POST_TOO_LARGE);
+                 // TODO parameters.setParseFailedReason(FailReason.POST_TOO_LARGE);
                     Context context = getContext();
                     if (context != null && context.getLogger().isDebugEnabled()) {
                         context.getLogger().debug(sm.getString("coyoteRequest.parseParameters"), ise);
@@ -3141,7 +3142,7 @@ public class Request implements HttpServletRequest {
                     return;
                 } catch (IOException e) {
                     // Client disconnect
-                    parameters.setParseFailedReason(FailReason.CLIENT_DISCONNECT);
+                 // TODO parameters.setParseFailedReason(FailReason.CLIENT_DISCONNECT);
                     Context context = getContext();
                     if (context != null && context.getLogger().isDebugEnabled()) {
                         context.getLogger().debug(sm.getString("coyoteRequest.parseParameters"), e);
@@ -3155,7 +3156,7 @@ public class Request implements HttpServletRequest {
             success = true;
         } finally {
             if (!success) {
-                parameters.setParseFailedReason(FailReason.UNKNOWN);
+             // TODO parameters.setParseFailedReason(FailReason.UNKNOWN);
             }
         }
 
@@ -3340,6 +3341,7 @@ public class Request implements HttpServletRequest {
                 // NO-OP
             }
         });
+        /*
         specialAttributes.put(Globals.PARAMETER_PARSE_FAILED_ATTR, new SpecialAttributeAdapter() {
             @Override
             public Object get(Request request, String name) {
@@ -3354,6 +3356,8 @@ public class Request implements HttpServletRequest {
                 // NO-OP
             }
         });
+        */
+        /*
         specialAttributes.put(Globals.PARAMETER_PARSE_FAILED_REASON_ATTR, new SpecialAttributeAdapter() {
             @Override
             public Object get(Request request, String name) {
@@ -3365,6 +3369,7 @@ public class Request implements HttpServletRequest {
                 // NO-OP
             }
         });
+        */
         specialAttributes.put(Globals.SENDFILE_SUPPORTED_ATTR, new SpecialAttributeAdapter() {
             @Override
             public Object get(Request request, String name) {

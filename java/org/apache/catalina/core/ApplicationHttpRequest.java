@@ -870,6 +870,7 @@ class ApplicationHttpRequest extends HttpServletRequestWrapper {
 
         paramParser.setQuery(queryMB);
         paramParser.setQueryStringCharset(charset);
+        paramParser.setErrorHandlingConfiguration(context.getParameterErrorHandlingConfiguration());
         paramParser.handleQueryParameters();
 
         // Insert the additional parameters from the dispatch target

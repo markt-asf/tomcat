@@ -128,6 +128,7 @@ import org.apache.tomcat.util.descriptor.web.MessageDestination;
 import org.apache.tomcat.util.descriptor.web.SecurityCollection;
 import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 import org.apache.tomcat.util.http.CookieProcessor;
+import org.apache.tomcat.util.http.ParameterErrorHandlingConfiguration;
 import org.apache.tomcat.util.http.Rfc6265CookieProcessor;
 import org.apache.tomcat.util.scan.StandardJarScanner;
 import org.apache.tomcat.util.threads.ScheduledThreadPoolExecutor;
@@ -796,8 +797,26 @@ public class StandardContext extends ContainerBase implements Context, Notificat
 
     private boolean parallelAnnotationScanning = false;
 
+    private ParameterErrorHandlingConfiguration parameterErrorHandlingConfiguration;
 
     // ----------------------------------------------------- Context Properties
+
+    @Override
+    public void setParameterErrorHandlingConfiguration(
+            ParameterErrorHandlingConfiguration parameterErrorHandlingConfiguration) {
+        if (parameterErrorHandlingConfiguration == null) {
+            throw new IllegalArgumentException(
+                    sm.getString("standardContext.parameterErrorHandlingConfiguration.null"));
+        }
+        this.parameterErrorHandlingConfiguration = parameterErrorHandlingConfiguration;
+    }
+
+
+    @Override
+    public ParameterErrorHandlingConfiguration getParameterErrorHandlingConfiguration() {
+        return parameterErrorHandlingConfiguration;
+    }
+
 
     @Override
     public void setCreateUploadTargets(boolean createUploadTargets) {
@@ -4680,6 +4699,11 @@ public class StandardContext extends ContainerBase implements Context, Notificat
         // An explicit cookie processor hasn't been specified; use the default
         if (cookieProcessor == null) {
             cookieProcessor = new Rfc6265CookieProcessor();
+        }
+
+        // An explicit parameter error handler configuration hasn't been specified; use the default
+        if (parameterErrorHandlingConfiguration == null) {
+            parameterErrorHandlingConfiguration = new ParameterErrorHandlingConfiguration();
         }
 
         // Initialize character set mapper

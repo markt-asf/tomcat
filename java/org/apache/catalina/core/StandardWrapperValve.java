@@ -38,6 +38,7 @@ import org.apache.catalina.valves.ValveBase;
 import org.apache.coyote.CloseNowException;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.buf.MessageBytes;
+import org.apache.tomcat.util.http.InvalidParameterException;
 import org.apache.tomcat.util.log.SystemLogHandler;
 import org.apache.tomcat.util.res.StringManager;
 
@@ -168,6 +169,8 @@ final class StandardWrapperValve extends ValveBase {
                 }
 
             }
+        } catch (InvalidParameterException e) {
+            exception(request, response, e, HttpServletResponse.SC_BAD_REQUEST);
         } catch (ClientAbortException | CloseNowException e) {
             if (container.getLogger().isDebugEnabled()) {
                 container.getLogger().debug(
@@ -271,8 +274,21 @@ final class StandardWrapperValve extends ValveBase {
      * @param exception The exception that occurred (which possibly wraps a root cause exception
      */
     private void exception(Request request, Response response, Throwable exception) {
+        exception(request, response, exception, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * Handle the specified ServletException encountered while processing the specified Request to produce the specified
+     * Response. Any exceptions that occur during generation of the exception report are logged and swallowed.
+     *
+     * @param request   The request being processed
+     * @param response  The response being generated
+     * @param exception The exception that occurred (which possibly wraps a root cause exception
+     * @param status    The HTTP status code to use for the response
+     */
+    private void exception(Request request, Response response, Throwable exception, int status) {
         request.setAttribute(RequestDispatcher.ERROR_EXCEPTION, exception);
-        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        response.setStatus(status);
         response.setError();
     }
 
