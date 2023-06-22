@@ -16,19 +16,13 @@
  */
 package jakarta.servlet;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
@@ -41,10 +35,10 @@ import static org.apache.catalina.startup.SimpleHttpClient.CRLF;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.startup.SimpleHttpClient;
 import org.apache.catalina.startup.Tomcat;
-import org.apache.catalina.startup.TomcatBaseTest;
+import org.apache.tomcat.util.http.ParameterErrorHandlingConfiguration;
 
 @RunWith(Parameterized.class)
-public class TestServletRequestQueryString extends TomcatBaseTest {
+public class TestServletRequestQueryString extends TestServletRequestBase {
 
     private static final Integer SC_OK = Integer.valueOf(HttpServletResponse.SC_OK);
     private static final Integer SC_BAD_REQUEST = Integer.valueOf(HttpServletResponse.SC_BAD_REQUEST);
@@ -142,25 +136,11 @@ public class TestServletRequestQueryString extends TomcatBaseTest {
                 "Connection: close" + CRLF +
                 CRLF });
         client.setResponseBodyEncoding(StandardCharsets.UTF_8);
-        client.connect(600000, 600000);
         client.processRequest();
 
         Assert.assertEquals(expectedStatusCode, client.getStatusCode());
 
-        System.out.println(client.getResponseBody());
-        Map<String,List<String>> parameters = new LinkedHashMap<>();
-        if (client.isResponse200()) {
-            String[] lines = client.getResponseBody().split(System.lineSeparator());
-            for (String line : lines) {
-                // Every line should be name=value
-                int equalsPos = line.indexOf('=');
-                String name = line.substring(0, equalsPos);
-                String value = line.substring(equalsPos + 1);
-
-                List<String> values = parameters.computeIfAbsent(name, k -> new ArrayList<>());
-                values.add(value);
-            }
-        }
+        Map<String,List<String>> parameters = parseReportedParameters(client);
 
         Assert.assertEquals(expectedValidParameterCount, parameters.size());
 
@@ -169,28 +149,6 @@ public class TestServletRequestQueryString extends TomcatBaseTest {
             Assert.assertNotNull(values);
             Assert.assertEquals(1,  values.size());
             Assert.assertEquals(expectedTestParameterValue, values.getFirst());
-        }
-    }
-
-
-    private static class ParameterParsingServlet extends HttpServlet {
-
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
-            resp.setContentType("text/plain");
-            resp.setCharacterEncoding(StandardCharsets.UTF_8);
-            PrintWriter pw = resp.getWriter();
-
-            Enumeration<String> names = req.getParameterNames();
-            while (names.hasMoreElements()) {
-                String name = names.nextElement();
-                for (String value : req.getParameterValues(name)) {
-                    pw.print(name + "=" + value + '\n');
-                }
-            }
         }
     }
 
