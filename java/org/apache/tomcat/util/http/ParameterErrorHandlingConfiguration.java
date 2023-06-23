@@ -29,6 +29,12 @@ public class ParameterErrorHandlingConfiguration {
     private boolean skipMaxParameterCountError = false;
 
 
+    /**
+     * If an empty query string parameter is present (@code{...&&...}) is it ignored or is an
+     * {@link ParameterEmptyException} thrown?
+     *
+     * @return {@code true} if the empty parameter is ignored, {@code false} if an exception is thrown
+     */
     public boolean getSkipEmptyParameter() {
         return skipEmptyParameter;
     }
@@ -39,6 +45,12 @@ public class ParameterErrorHandlingConfiguration {
     }
 
 
+    /**
+     * If an invalid query string parameter is present (e.g. @code{...&=value&...}) is it ignored or is an
+     * {@link ParameterNoNameException} thrown?
+     *
+     * @return {@code true} if the invalid parameter is ignored, {@code false} if an exception is thrown
+     */
     public boolean getSkipNoNameParameter() {
         return skipNoNameParameter;
     }
@@ -49,6 +61,12 @@ public class ParameterErrorHandlingConfiguration {
     }
 
 
+    /**
+     * If an query string parameter contains invalid {@code %nn} encoding (e.g. @code{...&name=va%GGlue&...}) is it
+     * ignored or is an {@link ParameterUrlDecodingException} thrown?
+     *
+     * @return {@code true} if the invalid parameter is ignored, {@code false} if an exception is thrown
+     */
     public boolean getSkipUrlDecodingError() {
         return skipUrlDecodingError;
     }
@@ -59,6 +77,15 @@ public class ParameterErrorHandlingConfiguration {
     }
 
 
+    /**
+     * If an query string parameter contains an invalid byte sequence for the given encoding, how is the invalid byte
+     * sequence handled?
+     *
+     * @return The action to take if an valid byte sequence is found. Note that {@link CodingErrorAction#REPORT} will
+     *             trigger an {@link ParameterDecodingException}
+     *
+     * @see #skipDecodingError
+     */
     public CodingErrorAction malformedInputAction() {
         return malformedInputAction;
     }
@@ -69,6 +96,15 @@ public class ParameterErrorHandlingConfiguration {
     }
 
 
+    /**
+     * If an query string parameter contains a byte sequence representing an unmappable character for the given
+     * encoding, how is the byte sequence handled?
+     *
+     * @return The action to take if an unmappable character is found. Note that {@link CodingErrorAction#REPORT} will
+     *             trigger an {@link ParameterDecodingException}
+     *
+     * @see #skipDecodingError
+     */
     public CodingErrorAction unmappableCharacterAction() {
         return unmappableCharacterAction;
     }
@@ -79,6 +115,13 @@ public class ParameterErrorHandlingConfiguration {
     }
 
 
+    /**
+     * If an query string parameter contains an invalid byte sequence and {@link #onMalformedInput(CodingErrorAction)}
+     * or {@link #onUnmappableCharacter(CodingErrorAction)} are configured with {@link CodingErrorAction#REPORT} is the
+     * parameter ignore or is an {@link ParameterDecodingException} thrown?
+     *
+     * @return {@code true} if the invalid parameter is ignored, {@code false} if an exception is thrown
+     */
     public boolean getSkipDecodingError() {
         return skipDecodingError;
     }
@@ -89,6 +132,12 @@ public class ParameterErrorHandlingConfiguration {
     }
 
 
+    /**
+     * If more parameters are found than {@code maxParameterCount} are the parameters above the limit ignored or is an
+     * {@link ParameterMaxCountExceededException} thrown?
+     *
+     * @return {@code true} if the additional parameters are ignored, {@code false} if an exception is thrown
+     */
     public boolean getSkipMaxParameterCountError() {
         return skipMaxParameterCountError;
     }
