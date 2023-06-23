@@ -104,6 +104,7 @@ import org.apache.tomcat.util.buf.UDecoder;
 import org.apache.tomcat.util.http.CookieProcessor;
 import org.apache.tomcat.util.http.FastHttpDateFormat;
 import org.apache.tomcat.util.http.Parameters;
+import org.apache.tomcat.util.http.RequestEntityTooLargeException;
 import org.apache.tomcat.util.http.Rfc6265CookieProcessor;
 import org.apache.tomcat.util.http.ServerCookie;
 import org.apache.tomcat.util.http.ServerCookies;
@@ -3099,12 +3100,7 @@ public class Request implements HttpServletRequest {
             if (len > 0) {
                 int maxPostSize = connector.getMaxPostSize();
                 if ((maxPostSize >= 0) && (len > maxPostSize)) {
-                    Context context = getContext();
-                    if (context != null && context.getLogger().isDebugEnabled()) {
-                        context.getLogger().debug(sm.getString("coyoteRequest.postTooLarge"));
-                    }
-                    checkSwallowInput();
-                 // TODO parameters.setParseFailedReason(FailReason.POST_TOO_LARGE);
+                    handlePostTooLarge();
                     return;
                 }
                 byte[] formData = null;
@@ -3133,12 +3129,7 @@ public class Request implements HttpServletRequest {
                 try {
                     formData = readChunkedPostBody();
                 } catch (IllegalStateException ise) {
-                    // chunkedPostTooLarge error
-                 // TODO parameters.setParseFailedReason(FailReason.POST_TOO_LARGE);
-                    Context context = getContext();
-                    if (context != null && context.getLogger().isDebugEnabled()) {
-                        context.getLogger().debug(sm.getString("coyoteRequest.parseParameters"), ise);
-                    }
+                    handlePostTooLarge();
                     return;
                 } catch (IOException e) {
                     // Client disconnect
@@ -3159,7 +3150,26 @@ public class Request implements HttpServletRequest {
              // TODO parameters.setParseFailedReason(FailReason.UNKNOWN);
             }
         }
+    }
 
+
+    private void handlePostTooLarge() {
+        Context context = getContext();
+        String msg = null;
+        if (context != null) {
+            if (context.getLogger().isDebugEnabled()) {
+                msg = sm.getString("coyoteRequest.postTooLarge");
+                context.getLogger().debug(msg);
+            }
+            if (context.getParameterErrorHandlingConfiguration().getSkipRequestBodyTooLarge()) {
+                return;
+            }
+        }
+        checkSwallowInput();
+        if (msg == null) {
+            msg = sm.getString("coyoteRequest.postTooLarge");
+        }
+        throw new RequestEntityTooLargeException(msg);
     }
 
 

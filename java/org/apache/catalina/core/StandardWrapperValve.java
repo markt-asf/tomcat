@@ -170,7 +170,7 @@ final class StandardWrapperValve extends ValveBase {
 
             }
         } catch (ParameterInvalidException e) {
-            exception(request, response, e, HttpServletResponse.SC_BAD_REQUEST);
+            exception(request, response, e, e.getStatusCode());
         } catch (ClientAbortException | CloseNowException e) {
             if (container.getLogger().isDebugEnabled()) {
                 container.getLogger().debug(

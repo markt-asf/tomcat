@@ -27,6 +27,7 @@ public class ParameterErrorHandlingConfiguration {
     private CodingErrorAction unmappableCharacterAction = CodingErrorAction.REPORT;
     private boolean skipDecodingError = false;
     private boolean skipMaxParameterCountError = false;
+    private boolean skipRequestBodyTooLarge = false;
 
 
     /**
@@ -145,5 +146,23 @@ public class ParameterErrorHandlingConfiguration {
 
     public void setSkipMaxParameterCountError(boolean skipMaxParameterCountError) {
         this.skipMaxParameterCountError = skipMaxParameterCountError;
+    }
+
+
+    /**
+     * When parsing a POST'd request body of type {@code application/x-www-form-urlencoded} for parameters, if the
+     * request body is larger than the Connector's {@code maxPostSize} is the request body ignored or is an
+     * {@link RequestEntityTooLargeException} thrown? Note that {@code maxSwallowSize} may also affect the processing of
+     * the request.
+     *
+     * @return {@code true} if the request body is ignored, {@code false} if an exception is thrown
+     */
+    public boolean getSkipRequestBodyTooLarge() {
+        return skipRequestBodyTooLarge;
+    }
+
+
+    public void setSkipRequestBodyTooLarge(boolean skipRequestBodyTooLarge) {
+        this.skipRequestBodyTooLarge = skipRequestBodyTooLarge;
     }
 }

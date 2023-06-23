@@ -71,5 +71,20 @@ public class TestServletRequestBase extends TomcatBaseTest {
                 }
             }
         }
+
+        @Override
+        protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            // Required parameter processing is the same as for GET
+            doGet(req, resp);
+        }
+    }
+
+
+    protected static class TestParameterClient extends SimpleHttpClient {
+
+        @Override
+        public boolean isResponseBodyOK() {
+            return true;
+        }
     }
 }

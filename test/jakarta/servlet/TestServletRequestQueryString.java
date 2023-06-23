@@ -33,7 +33,6 @@ import org.junit.runners.Parameterized.Parameter;
 
 import static org.apache.catalina.startup.SimpleHttpClient.CRLF;
 import org.apache.catalina.core.StandardContext;
-import org.apache.catalina.startup.SimpleHttpClient;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.tomcat.util.http.ParameterErrorHandlingConfiguration;
 
@@ -60,7 +59,7 @@ public class TestServletRequestQueryString extends TestServletRequestBase {
         // Invalid parameter
         parameterSets.add(new Object[] { defaultConfig, "before=aaa&=value&after=zzz", SC_BAD_REQUEST, ZERO, null} );
         config = new ParameterErrorHandlingConfiguration();
-        config.setSkipInvalidParameter(true);
+        config.setSkipNoNameParameter(true);
         parameterSets.add(new Object[] { config, "before=aaa&=value&after=zzz", SC_OK, TWO, null} );
 
         // Invalid %nn encoding
@@ -136,6 +135,7 @@ public class TestServletRequestQueryString extends TestServletRequestBase {
                 "Connection: close" + CRLF +
                 CRLF });
         client.setResponseBodyEncoding(StandardCharsets.UTF_8);
+        client.connect();
         client.processRequest();
 
         Assert.assertEquals(expectedStatusCode, client.getStatusCode());
@@ -149,15 +149,6 @@ public class TestServletRequestQueryString extends TestServletRequestBase {
             Assert.assertNotNull(values);
             Assert.assertEquals(1,  values.size());
             Assert.assertEquals(expectedTestParameterValue, values.getFirst());
-        }
-    }
-
-
-    private static class TestParameterClient extends SimpleHttpClient {
-
-        @Override
-        public boolean isResponseBodyOK() {
-            return true;
         }
     }
 }
