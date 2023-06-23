@@ -189,9 +189,15 @@ public final class Parameters {
 
         if (limit > -1 && parameterCount >= limit) {
             // Processing this parameter will push us over the limit.
+            parseFailureCount++;
             String msg = sm.getString("parameters.maxCountFail", Integer.valueOf(limit));
-            handleParameterProcessingError(msg, errorHandlingConfiguration.getSkipMaxParameterCountError(), null);
-            return;
+            if (log.isDebugEnabled()) {
+                log.debug(msg);
+            }
+            if (errorHandlingConfiguration.getSkipMaxParameterCountError()) {
+                return;
+            }
+            throw new ParameterMaxCountExceededException(msg);
         }
         parameterCount++;
         paramHashValues.computeIfAbsent(key, k -> new ArrayList<>(1)).add(value);
@@ -294,9 +300,15 @@ public final class Parameters {
             if (nameEnd <= nameStart) {
                 if (valueStart == -1) {
                     // &&
+                    parseFailureCount++;
                     String msg = sm.getString("parameters.emptyChunk");
-                    handleParameterProcessingError(msg, errorHandlingConfiguration.getSkipEmptyParameter(), null);
-                    continue;
+                    if (log.isDebugEnabled()) {
+                        log.debug(msg);
+                    }
+                    if (errorHandlingConfiguration.getSkipEmptyParameter()) {
+                        continue;
+                    }
+                    throw new ParameterEmptyException(msg);
                 }
                 // &=foo&
                 String extract;
@@ -305,10 +317,16 @@ public final class Parameters {
                 } else {
                     extract = "";
                 }
+                parseFailureCount++;
                 String msg = sm.getString("parameters.invalidChunk", Integer.valueOf(nameStart),
                         Integer.valueOf(valueEnd), extract);
-                handleParameterProcessingError(msg, errorHandlingConfiguration.getSkipInvalidParameter(), null);
-                continue;
+                if (log.isDebugEnabled()) {
+                    log.debug(msg);
+                }
+                if (errorHandlingConfiguration.getSkipNoNameParameter()) {
+                    continue;
+                }
+                throw new ParameterNoNameException(msg);
             }
 
             tmpName.setBytes(bytes, nameStart, nameEnd - nameStart);
@@ -344,9 +362,15 @@ public final class Parameters {
                         urlDecode(tmpName);
                     } catch (IOException e) {
                         // Invalid %nn sequence
+                        parseFailureCount++;
                         String msg = getParameterMessage("parameters.urlDecodeFail");
-                        handleParameterProcessingError(msg, errorHandlingConfiguration.getSkipUrlDecodingError(), null);
-                        continue;
+                        if (log.isDebugEnabled()) {
+                            log.debug(msg);
+                        }
+                        if (errorHandlingConfiguration.getSkipUrlDecodingError()) {
+                            continue;
+                        }
+                        throw new ParameterUrlDecodingException(msg, e);
                     }
                 }
 
@@ -356,9 +380,15 @@ public final class Parameters {
                             errorHandlingConfiguration.unmappableCharacterAction());
                 } catch (CharacterCodingException e) {
                     // Invalid byte sequence for character set
+                    parseFailureCount++;
                     String msg = getParameterMessage("parameters.decodeFail");
-                    handleParameterProcessingError(msg, errorHandlingConfiguration.getSkipDecodingError(), null);
-                    continue;
+                    if (log.isDebugEnabled()) {
+                        log.debug(msg);
+                    }
+                    if (errorHandlingConfiguration.getSkipDecodingError()) {
+                        continue;
+                    }
+                    throw new ParameterDecodingException(msg, e);
                 }
 
                 if (valueStart >= 0) {
@@ -367,10 +397,15 @@ public final class Parameters {
                             urlDecode(tmpValue);
                         } catch (IOException e) {
                             // Invalid %nn sequence
+                            parseFailureCount++;
                             String msg = getParameterMessage("parameters.urlDecodeFail");
-                            handleParameterProcessingError(msg, errorHandlingConfiguration.getSkipUrlDecodingError(),
-                                    null);
-                            continue;
+                            if (log.isDebugEnabled()) {
+                                log.debug(msg);
+                            }
+                            if (errorHandlingConfiguration.getSkipUrlDecodingError()) {
+                                continue;
+                            }
+                            throw new ParameterUrlDecodingException(msg, e);
                         }
                     }
                     tmpValue.setCharset(charset);
@@ -379,9 +414,15 @@ public final class Parameters {
                                 errorHandlingConfiguration.unmappableCharacterAction());
                     } catch (CharacterCodingException e) {
                         // Invalid byte sequence for character set
+                        parseFailureCount++;
                         String msg = getParameterMessage("parameters.decodeFail");
-                        handleParameterProcessingError(msg, errorHandlingConfiguration.getSkipDecodingError(), null);
-                        continue;
+                        if (log.isDebugEnabled()) {
+                            log.debug(msg);
+                        }
+                        if (errorHandlingConfiguration.getSkipDecodingError()) {
+                            continue;
+                        }
+                        throw new ParameterDecodingException(msg, e);
                     }
                 } else {
                     value = "";
@@ -412,22 +453,6 @@ public final class Parameters {
         } else {
             return sm.getString(messageKey, tmpName.toString(), tmpValue.toString()) + " " +
                     sm.getString("parameters.corrupted");
-        }
-    }
-
-
-    private void handleParameterProcessingError(String message, boolean skipError, Throwable cause) {
-        parseFailureCount++;
-        if (log.isDebugEnabled()) {
-            log.debug(message);
-        }
-        if (skipError) {
-            return;
-        }
-        if (cause == null) {
-            throw new InvalidParameterException(message);
-        } else {
-            throw new InvalidParameterException(message, cause);
         }
     }
 

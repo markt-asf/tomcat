@@ -37,7 +37,7 @@ import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.descriptor.web.ErrorPage;
-import org.apache.tomcat.util.http.InvalidParameterException;
+import org.apache.tomcat.util.http.ParameterInvalidException;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
@@ -295,7 +295,7 @@ final class StandardHostValve extends ValveBase {
                     }
                 }
             }
-        } else if (!(throwable instanceof InvalidParameterException)){
+        } else if (!(throwable instanceof ParameterInvalidException)){
             // A custom error-page has not been defined for the exception
             // that was thrown during request processing. Check if an
             // error-page for error code 500 was specified and if so,

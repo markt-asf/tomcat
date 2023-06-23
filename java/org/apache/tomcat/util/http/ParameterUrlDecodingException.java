@@ -16,22 +16,15 @@
  */
 package org.apache.tomcat.util.http;
 
-import jakarta.servlet.http.HttpServletResponse;
-
 /**
- * Extend {@link IllegalStateException} to identify the cause as an invalid parameter.
+ * Extend {@link ParameterInvalidException} to identify the cause as a URL %nn decoding error.
  */
-public class InvalidParameterException extends IllegalStateException {
+public class ParameterUrlDecodingException extends ParameterInvalidException {
 
     private static final long serialVersionUID = 1L;
 
 
-    public InvalidParameterException(String message) {
-        super(message);
-    }
-
-
-    public InvalidParameterException(String message, Throwable cause) {
+    public ParameterUrlDecodingException(String message, Throwable cause) {
         super(message, cause);
     }
 
@@ -45,10 +38,5 @@ public class InvalidParameterException extends IllegalStateException {
          * a better fix than enabling stack traces.
          */
         return this;
-    }
-
-
-    public int getStatusCode() {
-        return HttpServletResponse.SC_BAD_REQUEST;
     }
 }

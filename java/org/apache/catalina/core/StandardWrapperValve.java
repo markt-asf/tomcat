@@ -38,7 +38,7 @@ import org.apache.catalina.valves.ValveBase;
 import org.apache.coyote.CloseNowException;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.buf.MessageBytes;
-import org.apache.tomcat.util.http.InvalidParameterException;
+import org.apache.tomcat.util.http.ParameterInvalidException;
 import org.apache.tomcat.util.log.SystemLogHandler;
 import org.apache.tomcat.util.res.StringManager;
 
@@ -169,7 +169,7 @@ final class StandardWrapperValve extends ValveBase {
                 }
 
             }
-        } catch (InvalidParameterException e) {
+        } catch (ParameterInvalidException e) {
             exception(request, response, e, HttpServletResponse.SC_BAD_REQUEST);
         } catch (ClientAbortException | CloseNowException e) {
             if (container.getLogger().isDebugEnabled()) {

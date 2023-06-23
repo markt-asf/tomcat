@@ -21,7 +21,7 @@ import java.nio.charset.CodingErrorAction;
 public class ParameterErrorHandlingConfiguration {
 
     private boolean skipEmptyParameter = false;
-    private boolean skipInvalidParameter = false;
+    private boolean skipNoNameParameter = false;
     private boolean skipUrlDecodingError = false;
     private CodingErrorAction malformedInputAction = CodingErrorAction.REPORT;
     private CodingErrorAction unmappableCharacterAction = CodingErrorAction.REPORT;
@@ -39,13 +39,13 @@ public class ParameterErrorHandlingConfiguration {
     }
 
 
-    public boolean getSkipInvalidParameter() {
-        return skipInvalidParameter;
+    public boolean getSkipNoNameParameter() {
+        return skipNoNameParameter;
     }
 
 
-    public void setSkipInvalidParameter(boolean skipInvalidParameter) {
-        this.skipInvalidParameter = skipInvalidParameter;
+    public void setSkipNoNameParameter(boolean skipNoNameParameter) {
+        this.skipNoNameParameter = skipNoNameParameter;
     }
 
 
