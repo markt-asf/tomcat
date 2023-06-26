@@ -26,8 +26,18 @@ public class ParameterInvalidException extends IllegalStateException {
     private static final long serialVersionUID = 1L;
 
 
+    public ParameterInvalidException() {
+        super();
+    }
+
+
     public ParameterInvalidException(String message) {
         super(message);
+    }
+
+
+    public ParameterInvalidException(Throwable cause) {
+        super(cause);
     }
 
 

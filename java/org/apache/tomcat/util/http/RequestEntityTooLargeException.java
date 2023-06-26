@@ -26,6 +26,10 @@ public class RequestEntityTooLargeException extends ParameterInvalidException {
         super(message);
     }
 
+    public RequestEntityTooLargeException(Throwable cause) {
+        super(cause);
+    }
+
     @Override
     public int getStatusCode() {
         return HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE;

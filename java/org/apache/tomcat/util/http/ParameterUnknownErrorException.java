@@ -22,8 +22,4 @@ package org.apache.tomcat.util.http;
 public class ParameterUnknownErrorException extends ParameterInvalidException {
 
     private static final long serialVersionUID = 1L;
-
-    public ParameterUnknownErrorException() {
-        super(null);
-    }
 }

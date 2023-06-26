@@ -2776,8 +2776,7 @@ public class Request implements HttpServletRequest {
                             // Value separator
                             postSize++;
                             if (postSize > maxPostSize) {
-                             // TODO parameters.setParseFailedReason(FailReason.POST_TOO_LARGE);
-                                throw new IllegalStateException(sm.getString("coyoteRequest.maxPostSizeExceeded"));
+                                throw new RequestEntityTooLargeException(sm.getString("coyoteRequest.maxPostSizeExceeded"));
                             }
                         }
                         String value = null;
@@ -2795,24 +2794,20 @@ public class Request implements HttpServletRequest {
              // TODO parameters.setParseFailedReason(FailReason.INVALID_CONTENT_TYPE);
                 partsParseException = new ServletException(e);
             } catch (SizeException e) {
-             // TODO parameters.setParseFailedReason(FailReason.POST_TOO_LARGE);
                 checkSwallowInput();
-                partsParseException = new IllegalStateException(e);
+                partsParseException = new RequestEntityTooLargeException(e);
             } catch (IOException e) {
              // TODO parameters.setParseFailedReason(FailReason.IO_ERROR);
                 partsParseException = e;
             } catch (IllegalStateException e) {
-                // addParameters() will set parseFailedReason
                 checkSwallowInput();
                 partsParseException = e;
             }
         } finally {
-            // This might look odd but is correct. setParseFailedReason() only
-            // sets the failure reason if none is currently set. This code could
-            // be more efficient but it is written this way to be robust with
-            // respect to changes in the remainder of the method.
-            if (partsParseException != null || !success) {
-             // TODO parameters.setParseFailedReason(FailReason.UNKNOWN);
+            if (!success) {
+                if (partsParseException == null) {
+                    partsParseException = new ParameterUnknownErrorException();
+                }
             }
         }
     }
