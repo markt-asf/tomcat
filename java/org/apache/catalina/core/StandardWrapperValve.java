@@ -34,6 +34,7 @@ import org.apache.catalina.LifecycleException;
 import org.apache.catalina.connector.ClientAbortException;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
+import org.apache.catalina.connector.UncheckedClientDisconnectException;
 import org.apache.catalina.valves.ValveBase;
 import org.apache.coyote.CloseNowException;
 import org.apache.tomcat.util.ExceptionUtils;
@@ -171,7 +172,14 @@ final class StandardWrapperValve extends ValveBase {
             }
         } catch (ParameterInvalidException e) {
             exception(request, response, e, e.getStatusCode());
-        } catch (ClientAbortException | CloseNowException e) {
+        } catch (ClientAbortException | UncheckedClientDisconnectException e) {
+            if (container.getLogger().isDebugEnabled()) {
+                container.getLogger().debug(
+                        sm.getString("standardWrapper.serviceException", wrapper.getName(), context.getName()), e);
+            }
+            throwable = e;
+            exception(request, response, e, HttpServletResponse.SC_BAD_REQUEST);
+        } catch (CloseNowException e) {
             if (container.getLogger().isDebugEnabled()) {
                 container.getLogger().debug(
                         sm.getString("standardWrapper.serviceException", wrapper.getName(), context.getName()), e);

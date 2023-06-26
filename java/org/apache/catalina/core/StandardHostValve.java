@@ -31,6 +31,7 @@ import org.apache.catalina.Wrapper;
 import org.apache.catalina.connector.ClientAbortException;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
+import org.apache.catalina.connector.UncheckedClientDisconnectException;
 import org.apache.catalina.valves.ValveBase;
 import org.apache.coyote.ActionCode;
 import org.apache.juli.logging.Log;
@@ -259,7 +260,7 @@ final class StandardHostValve extends ValveBase {
         }
 
         // If this is an aborted request from a client just log it and return
-        if (realError instanceof ClientAbortException) {
+        if (realError instanceof ClientAbortException || realError instanceof UncheckedClientDisconnectException) {
             if (log.isDebugEnabled()) {
                 log.debug(sm.getString("standardHost.clientAbort", realError.getCause().getMessage()));
             }

@@ -43,6 +43,7 @@ import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.RequestFacade;
 import org.apache.catalina.connector.Response;
 import org.apache.catalina.connector.ResponseFacade;
+import org.apache.catalina.connector.UncheckedClientDisconnectException;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.res.StringManager;
 
@@ -546,12 +547,16 @@ final class ApplicationDispatcher implements AsyncDispatcher, RequestDispatcher 
         } catch (ServletException e) {
             Throwable rootCause = StandardWrapper.getRootCause(e);
             if (!(rootCause instanceof ClientAbortException)) {
+                // Don't log client disconnects
                 wrapper.getLogger().error(sm.getString("applicationDispatcher.serviceException", wrapper.getName()),
                         rootCause);
             }
             servletException = e;
         } catch (RuntimeException e) {
-            wrapper.getLogger().error(sm.getString("applicationDispatcher.serviceException", wrapper.getName()), e);
+            if (!(e instanceof UncheckedClientDisconnectException)) {
+                // Don't log client disconnects
+                wrapper.getLogger().error(sm.getString("applicationDispatcher.serviceException", wrapper.getName()), e);
+            }
             runtimeException = e;
         }
 

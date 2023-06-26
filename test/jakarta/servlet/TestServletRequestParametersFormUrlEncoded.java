@@ -35,7 +35,7 @@ import org.apache.catalina.startup.Tomcat;
 import org.apache.tomcat.util.http.ParameterErrorHandlingConfiguration;
 
 @RunWith(Parameterized.class)
-public class TestServletRequestFormUrlEncoded extends TestServletRequestBase {
+public class TestServletRequestParametersFormUrlEncoded extends TestServletRequestParametersBase {
 
     @Parameterized.Parameters(name = "{index}: relaxedConfig[{0}], chunked[{1}]")
     public static Collection<Object[]> parameters() {

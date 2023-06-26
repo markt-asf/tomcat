@@ -3133,12 +3133,12 @@ public class Request implements HttpServletRequest {
                     return;
                 } catch (IOException e) {
                     // Client disconnect
-                 // TODO parameters.setParseFailedReason(FailReason.CLIENT_DISCONNECT);
                     Context context = getContext();
+                    String message = sm.getString("coyoteRequest.parseParameters");
                     if (context != null && context.getLogger().isDebugEnabled()) {
-                        context.getLogger().debug(sm.getString("coyoteRequest.parseParameters"), e);
+                        context.getLogger().debug(message, e);
                     }
-                    return;
+                    throw new UncheckedClientDisconnectException(message, e);
                 }
                 if (formData != null) {
                     parameters.processParameters(formData, 0, formData.length);
