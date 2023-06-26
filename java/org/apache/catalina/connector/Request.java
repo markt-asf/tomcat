@@ -103,6 +103,7 @@ import org.apache.tomcat.util.buf.StringUtils;
 import org.apache.tomcat.util.buf.UDecoder;
 import org.apache.tomcat.util.http.CookieProcessor;
 import org.apache.tomcat.util.http.FastHttpDateFormat;
+import org.apache.tomcat.util.http.ParameterMultiPartConfigurationInvalidException;
 import org.apache.tomcat.util.http.ParameterUnknownErrorException;
 import org.apache.tomcat.util.http.Parameters;
 import org.apache.tomcat.util.http.RequestEntityTooLargeException;
@@ -2672,6 +2673,30 @@ public class Request implements HttpServletRequest {
         return parts;
     }
 
+
+    private void parsePartsImplicit() {
+        parseParts(false);
+
+        if (partsParseException != null) {
+            if (partsParseException instanceof IOException) {
+                handleParameterProcessingClientDisconnect(partsParseException);
+            } else if (partsParseException instanceof RequestEntityTooLargeException) {
+                Context context = getContext();
+                if (context != null && context.getParameterErrorHandlingConfiguration().getSkipRequestBodyTooLarge()) {
+                        return;
+                }
+                throw (RequestEntityTooLargeException) partsParseException;
+            } else if (partsParseException instanceof IllegalStateException) {
+                throw (IllegalStateException) partsParseException;
+            } else if (partsParseException instanceof ServletException) {
+                throw new ParameterMultiPartConfigurationInvalidException(partsParseException);
+            } else {
+                throw new ParameterUnknownErrorException(partsParseException);
+            }
+        }
+    }
+
+
     private void parseParts(boolean explicit) {
 
         // Return immediately if the parts have already been parsed
@@ -2688,7 +2713,7 @@ public class Request implements HttpServletRequest {
                         connector.getMaxPostSize());
             } else {
                 if (explicit) {
-                    partsParseException = new IllegalStateException(sm.getString("coyoteRequest.noMultipartConfig"));
+                    partsParseException = new ParameterMultiPartConfigurationInvalidException(sm.getString("coyoteRequest.noMultipartConfig"));
                     return;
                 } else {
                     parts = Collections.emptyList();
@@ -2725,8 +2750,8 @@ public class Request implements HttpServletRequest {
             }
 
             if (!location.isDirectory()) {
-                // TODO parameters.setParseFailedReason(FailReason.MULTIPART_CONFIG_INVALID);
-                partsParseException = new IOException(sm.getString("coyoteRequest.uploadLocationInvalid", location));
+                partsParseException = new ParameterMultiPartConfigurationInvalidException(
+                        sm.getString("coyoteRequest.uploadLocationInvalid", location));
                 return;
             }
 
@@ -2736,8 +2761,7 @@ public class Request implements HttpServletRequest {
             try {
                 factory.setRepository(location.getCanonicalFile());
             } catch (IOException ioe) {
-             // TODO parameters.setParseFailedReason(FailReason.IO_ERROR);
-                partsParseException = ioe;
+                partsParseException = new ParameterMultiPartConfigurationInvalidException(ioe);
                 return;
             }
             factory.setSizeThreshold(mce.getFileSizeThreshold());
@@ -2776,7 +2800,8 @@ public class Request implements HttpServletRequest {
                             // Value separator
                             postSize++;
                             if (postSize > maxPostSize) {
-                                throw new RequestEntityTooLargeException(sm.getString("coyoteRequest.maxPostSizeExceeded"));
+                                throw new RequestEntityTooLargeException(
+                                        sm.getString("coyoteRequest.maxPostSizeExceeded"));
                             }
                         }
                         String value = null;
@@ -2791,13 +2816,11 @@ public class Request implements HttpServletRequest {
 
                 success = true;
             } catch (InvalidContentTypeException e) {
-             // TODO parameters.setParseFailedReason(FailReason.INVALID_CONTENT_TYPE);
                 partsParseException = new ServletException(e);
             } catch (SizeException e) {
                 checkSwallowInput();
                 partsParseException = new RequestEntityTooLargeException(e);
             } catch (IOException e) {
-             // TODO parameters.setParseFailedReason(FailReason.IO_ERROR);
                 partsParseException = e;
             } catch (IllegalStateException e) {
                 checkSwallowInput();
@@ -3076,7 +3099,7 @@ public class Request implements HttpServletRequest {
             }
 
             if ("multipart/form-data".equals(contentType)) {
-                parseParts(false);
+                parsePartsImplicit();
                 success = true;
                 return;
             }
@@ -3345,35 +3368,6 @@ public class Request implements HttpServletRequest {
                 // NO-OP
             }
         });
-        /*
-        specialAttributes.put(Globals.PARAMETER_PARSE_FAILED_ATTR, new SpecialAttributeAdapter() {
-            @Override
-            public Object get(Request request, String name) {
-                if (request.getCoyoteRequest().getParameters().isParseFailed()) {
-                    return Boolean.TRUE;
-                }
-                return null;
-            }
-
-            @Override
-            public void set(Request request, String name, Object value) {
-                // NO-OP
-            }
-        });
-        */
-        /*
-        specialAttributes.put(Globals.PARAMETER_PARSE_FAILED_REASON_ATTR, new SpecialAttributeAdapter() {
-            @Override
-            public Object get(Request request, String name) {
-                return request.getCoyoteRequest().getParameters().getParseFailedReason();
-            }
-
-            @Override
-            public void set(Request request, String name, Object value) {
-                // NO-OP
-            }
-        });
-        */
         specialAttributes.put(Globals.SENDFILE_SUPPORTED_ATTR, new SpecialAttributeAdapter() {
             @Override
             public Object get(Request request, String name) {

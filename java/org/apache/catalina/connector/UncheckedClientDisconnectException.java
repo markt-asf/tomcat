@@ -20,9 +20,11 @@ public class UncheckedClientDisconnectException extends IllegalStateException {
 
     private static final long serialVersionUID = 1L;
 
-    public UncheckedClientDisconnectException(String s) {
-        super(s);
+
+    public UncheckedClientDisconnectException(String message) {
+        super(message);
     }
+
 
     public UncheckedClientDisconnectException(String message, Throwable cause) {
         super(message, cause);

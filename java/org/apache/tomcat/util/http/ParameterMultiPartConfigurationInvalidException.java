@@ -17,19 +17,18 @@
 package org.apache.tomcat.util.http;
 
 /**
- * Extend {@link ParameterInvalidException} to "identify" the cause as an unknown error.
+ * Extend {@link ParameterInvalidException} to identify the cause as an invalid configuration for handling multi-part
+ * uploads.
  */
-public class ParameterUnknownErrorException extends ParameterInvalidException {
+public class ParameterMultiPartConfigurationInvalidException extends ParameterInvalidException {
 
     private static final long serialVersionUID = 1L;
 
-
-    public ParameterUnknownErrorException() {
-        super();
+    public ParameterMultiPartConfigurationInvalidException(String message) {
+        super(message);
     }
 
-
-    public ParameterUnknownErrorException(Throwable cause) {
+    public ParameterMultiPartConfigurationInvalidException(Throwable cause) {
         super(cause);
     }
 }
