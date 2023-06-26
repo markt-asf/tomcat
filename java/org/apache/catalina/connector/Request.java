@@ -103,6 +103,7 @@ import org.apache.tomcat.util.buf.StringUtils;
 import org.apache.tomcat.util.buf.UDecoder;
 import org.apache.tomcat.util.http.CookieProcessor;
 import org.apache.tomcat.util.http.FastHttpDateFormat;
+import org.apache.tomcat.util.http.ParameterUnknownErrorException;
 import org.apache.tomcat.util.http.Parameters;
 import org.apache.tomcat.util.http.RequestEntityTooLargeException;
 import org.apache.tomcat.util.http.Rfc6265CookieProcessor;
@@ -3135,7 +3136,7 @@ public class Request implements HttpServletRequest {
             success = true;
         } finally {
             if (!success) {
-             // TODO parameters.setParseFailedReason(FailReason.UNKNOWN);
+                throw new ParameterUnknownErrorException();
             }
         }
     }
