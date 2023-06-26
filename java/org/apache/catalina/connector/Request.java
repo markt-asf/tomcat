@@ -3100,7 +3100,7 @@ public class Request implements HttpServletRequest {
             if (len > 0) {
                 int maxPostSize = connector.getMaxPostSize();
                 if ((maxPostSize >= 0) && (len > maxPostSize)) {
-                    handlePostTooLarge();
+                    handleParameterProcessingPostTooLarge();
                     return;
                 }
                 byte[] formData = null;
@@ -3115,13 +3115,7 @@ public class Request implements HttpServletRequest {
                 try {
                     readPostBodyFully(formData, len);
                 } catch (IOException e) {
-                    // Client disconnect
-                    Context context = getContext();
-                    if (context != null && context.getLogger().isDebugEnabled()) {
-                        context.getLogger().debug(sm.getString("coyoteRequest.parseParameters"), e);
-                    }
-                 // TODO parameters.setParseFailedReason(FailReason.CLIENT_DISCONNECT);
-                    return;
+                    handleParameterProcessingClientDisconnect(e);
                 }
                 parameters.processParameters(formData, 0, len);
             } else if ("chunked".equalsIgnoreCase(coyoteRequest.getHeader("transfer-encoding"))) {
@@ -3129,16 +3123,10 @@ public class Request implements HttpServletRequest {
                 try {
                     formData = readChunkedPostBody();
                 } catch (IllegalStateException ise) {
-                    handlePostTooLarge();
+                    handleParameterProcessingPostTooLarge();
                     return;
                 } catch (IOException e) {
-                    // Client disconnect
-                    Context context = getContext();
-                    String message = sm.getString("coyoteRequest.parseParameters");
-                    if (context != null && context.getLogger().isDebugEnabled()) {
-                        context.getLogger().debug(message, e);
-                    }
-                    throw new UncheckedClientDisconnectException(message, e);
+                    handleParameterProcessingClientDisconnect(e);
                 }
                 if (formData != null) {
                     parameters.processParameters(formData, 0, formData.length);
@@ -3153,7 +3141,17 @@ public class Request implements HttpServletRequest {
     }
 
 
-    private void handlePostTooLarge() {
+    private void handleParameterProcessingClientDisconnect(Throwable t) {
+        Context context = getContext();
+        String message = sm.getString("coyoteRequest.parseParameters");
+        if (context != null && context.getLogger().isDebugEnabled()) {
+            context.getLogger().debug(message, t);
+        }
+        throw new UncheckedClientDisconnectException(message, t);
+    }
+
+
+    private void handleParameterProcessingPostTooLarge() {
         Context context = getContext();
         String msg = null;
         if (context != null) {
