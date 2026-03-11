@@ -45,10 +45,10 @@ public class ChunkExtension {
                     return State.POST_NAME;
                 } else if (HttpParser.isToken(c)) {
                     return State.NAME;
-                } else if (c == '=') {
-                    return State.EQUALS;
                 } else if (c == ';') {
                     return State.PRE_NAME;
+                } else if (c == '=') {
+                    return State.EQUALS;
                 } else if (c == '\r') {
                     return State.CR;
                 }
@@ -56,10 +56,10 @@ public class ChunkExtension {
             case POST_NAME:
                 if (HttpParser.isWhiteSpace(c)) {
                     return State.POST_NAME;
-                } else if (c == '=') {
-                    return State.EQUALS;
                 } else if (c == ';') {
                     return State.PRE_NAME;
+                } else if (c == '=') {
+                    return State.EQUALS;
                 } else if (c == '\r') {
                     return State.CR;
                 }

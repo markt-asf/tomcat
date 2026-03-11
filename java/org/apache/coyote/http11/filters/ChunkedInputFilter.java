@@ -359,19 +359,17 @@ public class ChunkedInputFilter implements InputFilter, ApplicationBufferHandler
             byte chr = readChunk.get(readChunk.position());
 
             if (extensionState != null) {
-                if (extensionState != State.CR) {
-                    try {
-                        extensionState = ChunkExtension.parse(chr, extensionState);
-                    } catch (IOException e) {
-                        throwBadRequestException(sm.getString("chunkedInputFilter.invalidHeader"));
-                    }
+                try {
+                    extensionState = ChunkExtension.parse(chr, extensionState);
+                } catch (IOException ioe) {
+                    throwBadRequestException(sm.getString("chunkedInputFilter.invalidHeader"));
                 }
                 if (extensionState == State.CR) {
+                    extensionState = null;
                     if (!parseCRLF()) {
                         return false;
                     }
                     eol = true;
-                    extensionState = null;
                 } else {
                     // Check the size
                     long extSize = extensionSize.incrementAndGet();
@@ -439,24 +437,22 @@ public class ChunkedInputFilter implements InputFilter, ApplicationBufferHandler
             byte chr = readChunk.get(readChunk.position());
 
             if (extensionState != null) {
-                if (extensionState != State.CR) {
-                    try {
-                        extensionState = ChunkExtension.parse(chr, extensionState);
-                    } catch (IOException ioe) {
-                        /*
-                         * Can't throw the exception here. Need to swallow it. It will be thrown when parseChunkHeader()
-                         * is called. Not very efficient but it is an error condition for something that is hardly ever
-                         * used.
-                         */
-                        return false;
-                    }
+                try {
+                    extensionState = ChunkExtension.parse(chr, extensionState);
+                } catch (IOException ioe) {
+                    /*
+                     * Can't throw the exception here. Need to swallow it. It will be thrown when parseChunkHeader()
+                     * is called. Not very efficient but it is an error condition for something that is hardly ever
+                     * used.
+                     */
+                    return false;
                 }
                 if (extensionState == State.CR) {
+                    extensionState = null;
                     if (!skipCRLF()) {
                         return false;
                     }
                     eol = true;
-                    extensionState = null;
                 } else {
                     // Check the size
                     long extSize = extensionSize.incrementAndGet();
