@@ -161,6 +161,22 @@ public class TestChunkExtension {
         doTest(";abc=def;=\r\n", false);
     }
 
+    @Test
+    public void testTokenOnlyTokenOnly01() {
+        doTest(";abc;abc\r\n", true);
+    }
+
+    @Test
+    public void testTokenOnlyTokenOnly02() {
+        doTest("; abc ; abc \r\n", true);
+    }
+
+    @Test
+    public void testTokenOnlyTokenToken01() {
+        // name-only extension followed by name=value extension (RFC 9112 compliant)
+        doTest(";abc;ghi=jkl\r\n", true);
+    }
+
     private void doTest(String input, boolean valid) {
         byte[] bytes = input.getBytes(StandardCharsets.ISO_8859_1);
 
