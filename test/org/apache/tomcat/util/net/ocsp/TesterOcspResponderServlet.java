@@ -74,7 +74,7 @@ public class TesterOcspResponderServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     // Config
-    public  static final String INIT_FIXED_RESPONSE = "fixedResponse";
+    public static final String INIT_FIXED_RESPONSE = "fixedResponse";
     private TesterOcspResponder.OcspResponse fixedResponse;
 
     // Cached OCSP processing components
