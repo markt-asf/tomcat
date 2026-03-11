@@ -47,6 +47,8 @@ public class ChunkExtension {
                     return State.NAME;
                 } else if (c == '=') {
                     return State.EQUALS;
+                } else if (c == ';') {
+                    return State.PRE_NAME;
                 } else if (c == '\r') {
                     return State.CR;
                 }
@@ -56,6 +58,8 @@ public class ChunkExtension {
                     return State.POST_NAME;
                 } else if (c == '=') {
                     return State.EQUALS;
+                } else if (c == ';') {
+                    return State.PRE_NAME;
                 } else if (c == '\r') {
                     return State.CR;
                 }

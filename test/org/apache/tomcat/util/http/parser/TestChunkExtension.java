@@ -151,6 +151,30 @@ public class TestChunkExtension {
         doTest(";abc=def;=\r\n", false);
     }
 
+    @Test
+    public void testNameOnlyThenName() {
+        // name-only extension followed by name=value extension (RFC 9112 compliant)
+        doTest(";abc;ghi=jkl\r\n", true);
+    }
+
+    @Test
+    public void testNameOnlyWithSpaceThenName() {
+        // name-only extension with trailing whitespace followed by name=value extension
+        doTest(";abc ;ghi=jkl\r\n", true);
+    }
+
+    @Test
+    public void testNameOnlyThenNameOnly() {
+        // two consecutive name-only extensions
+        doTest(";abc;def\r\n", true);
+    }
+
+    @Test
+    public void testNameOnlyAlone() {
+        // single name-only extension at end of line
+        doTest(";abc\r\n", true);
+    }
+
     private void doTest(String input, boolean valid) {
         byte[] bytes = input.getBytes(StandardCharsets.ISO_8859_1);
 
