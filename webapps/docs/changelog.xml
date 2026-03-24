@@ -246,6 +246,11 @@
         Fix various minor issues with some HTTP/2 stream error messages for
         HTTP/2. (markt)
       </fix>
+      <add>
+        Provide trailer field filtering equivalent to that provided for
+        non-trailer fields. Control characters (excluding TAB), and characters
+        with code points above 255 will be replaced with a space. (markt)
+      </add>
     </changelog>
   </subsection>
   <subsection name="Jasper">
