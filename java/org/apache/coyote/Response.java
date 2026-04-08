@@ -421,6 +421,9 @@ public final class Response {
                     return true;
                 }
                 long cL = Long.parseLong(value);
+                if (cL < 0) {
+                    throw new NumberFormatException();
+                }
                 setContentLength(cL);
             } catch (NumberFormatException ex) {
                 setContentLength(-1);
