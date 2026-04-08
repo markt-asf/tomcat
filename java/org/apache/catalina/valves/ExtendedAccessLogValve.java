@@ -595,7 +595,7 @@ public class ExtendedAccessLogValve extends AccessLogValve {
                         return (buf, request, res, l) -> {
                             String query = request.getQueryString();
                             if (query != null) {
-                                buf.append(query);
+                                escapeAndAppend(query, buf);
                             } else {
                                 buf.append('-');
                             }
@@ -604,10 +604,10 @@ public class ExtendedAccessLogValve extends AccessLogValve {
                 } else {
                     return (buf, request, res, l) -> {
                         String query = request.getQueryString();
-                        buf.append(request.getRequestURI());
+                        escapeAndAppend(request.getRequestURI(), buf);
                         if (query != null) {
                             buf.append('?');
-                            buf.append(request.getQueryString());
+                            escapeAndAppend(request.getQueryString(), buf);
                         }
                     };
                 }
