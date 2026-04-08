@@ -1325,14 +1325,7 @@ public abstract class AbstractAccessLogValve extends ValveBase implements Access
                     buf.append(request.getMethod());
                     buf.append(' ');
                     escapeAndAppend(request.getRequestURI(), buf);
-                    String query = request.getQueryString();
-                    if (query != null) {
-                        buf.append('?');
-                        // Don't want to write "-" if the query string is empty
-                        if (!query.isEmpty()) {
-                            escapeAndAppend(query, buf);
-                        }
-                    }
+                    appendQueryString(request.getQueryString(), buf);
                     buf.append(' ');
                     buf.append(request.getProtocol());
                 }
@@ -1645,11 +1638,7 @@ public abstract class AbstractAccessLogValve extends ValveBase implements Access
                 query = request.getQueryString();
             }
             if (query != null) {
-                buf.append('?');
-                // Don't want to write "-" if the query string is empty
-                if (!query.isEmpty()) {
-                    escapeAndAppend(query, buf);
-                }
+                appendQueryString(query, buf);
             } else {
                 buf.append('-');
             }
@@ -2213,6 +2202,24 @@ public abstract class AbstractAccessLogValve extends ValveBase implements Access
      */
     protected static void escapeAndAppend(String input, CharArrayWriter dest) {
         escapeAndAppend(input, dest, false);
+    }
+
+
+    /**
+     * Appends the query string to the destination writer. A {@code ?} is prepended if the query string is present. If
+     * the query string is non-empty, it is escaped and appended after the {@code ?}.
+     *
+     * @param query The query string (may be null)
+     * @param dest  The destination writer
+     */
+    protected static void appendQueryString(String query, CharArrayWriter dest) {
+        if (query != null) {
+            dest.append('?');
+            // Don't want to write "-" if the query string is empty
+            if (!query.isEmpty()) {
+                escapeAndAppend(query, dest);
+            }
+        }
     }
 
 

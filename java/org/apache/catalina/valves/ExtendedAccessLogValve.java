@@ -607,7 +607,7 @@ public class ExtendedAccessLogValve extends AccessLogValve {
                         buf.append(request.getRequestURI());
                         if (query != null) {
                             buf.append('?');
-                            buf.append(request.getQueryString());
+                            buf.append(query);
                         }
                     };
                 }
