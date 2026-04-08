@@ -42,7 +42,6 @@ public abstract class TesterRateLimitClientBase extends Thread {
         this.rlpHeader = new String[requests];
         this.rlHeader = new String[requests];
         super.setDaemon(true);
-        super.start();
     }
 
     @Override

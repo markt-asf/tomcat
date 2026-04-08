@@ -152,6 +152,7 @@ public class TestRateLimitFilterWithExactRateLimiter extends TomcatBaseTest {
         TestClient(RateLimitFilter filter, FilterChain filterChain, String ip, int requests, int rps) {
             super(filter, filterChain, ip, requests);
             this.timePerRequest = 1000 / rps;
+            super.start();
         }
 
         @Override
