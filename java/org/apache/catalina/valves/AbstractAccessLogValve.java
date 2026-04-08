@@ -2207,7 +2207,8 @@ public abstract class AbstractAccessLogValve extends ValveBase implements Access
 
     /**
      * Appends the query string to the destination writer. A {@code ?} is prepended if the query string is present. If
-     * the query string is non-empty, it is escaped and appended after the {@code ?}.
+     * the query string is non-empty, it is escaped and appended after the {@code ?}. If the query string is null,
+     * nothing is appended; the caller is responsible for handling that case (e.g. appending {@code -}).
      *
      * @param query The query string (may be null)
      * @param dest  The destination writer
