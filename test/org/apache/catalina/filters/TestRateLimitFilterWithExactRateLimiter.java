@@ -16,8 +16,6 @@
  */
 package org.apache.catalina.filters;
 
-import java.io.IOException;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -182,7 +180,7 @@ public class TestRateLimitFilterWithExactRateLimiter extends TomcatBaseTest {
                 for (int i = 0; i < requests; i++) {
                     MockHttpServletRequest request = new MockHttpServletRequest();
                     request.setRemoteAddr(ip);
-                    TesterResponse response = new TesterResponseWithStatus();
+                    TesterResponse response = new TestRateLimitFilter.TesterResponseWithStatus();
                     response.setRequest(request);
                     filter.doFilter(request, response, filterChain);
                     results[i] = response.getStatus();
@@ -190,7 +188,7 @@ public class TestRateLimitFilterWithExactRateLimiter extends TomcatBaseTest {
                     rlpHeader[i] = response.getHeader(RateLimitFilter.HEADER_RATE_LIMIT_POLICY);
                     rlHeader[i] = response.getHeader(RateLimitFilter.HEADER_RATE_LIMIT);
 
-                    if (results[i] != 200) {
+                    if (results[i] != HttpServletResponse.SC_OK) {
                         break;
                     }
                     /*
@@ -206,23 +204,6 @@ public class TestRateLimitFilterWithExactRateLimiter extends TomcatBaseTest {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-        }
-    }
-
-    static class TesterResponseWithStatus extends TesterResponse {
-
-        int status = 200;
-        String message = "OK";
-
-        @Override
-        public void sendError(int status, String message) throws IOException {
-            this.status = status;
-            this.message = message;
-        }
-
-        @Override
-        public int getStatus() {
-            return status;
         }
     }
 }

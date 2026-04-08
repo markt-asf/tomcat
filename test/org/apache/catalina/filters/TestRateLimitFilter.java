@@ -202,7 +202,7 @@ public class TestRateLimitFilter extends TomcatBaseTest {
 
     static class TesterResponseWithStatus extends TesterResponse {
 
-        int status = 200;
+        int status = HttpServletResponse.SC_OK;
         String message = "OK";
 
         @Override
