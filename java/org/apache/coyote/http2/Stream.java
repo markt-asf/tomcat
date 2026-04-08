@@ -47,6 +47,7 @@ import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.buf.MessageBytes;
+import org.apache.tomcat.util.http.HeaderUtil;
 import org.apache.tomcat.util.http.Method;
 import org.apache.tomcat.util.http.MimeHeaders;
 import org.apache.tomcat.util.http.parser.Host;
@@ -638,8 +639,13 @@ class Stream extends AbstractNonZeroStream implements HeaderEmitter {
         // TODO: Is there benefit in refactoring this? Is MimeHeaders too
         // heavyweight? Can we reduce the copy/conversions?
         for (Map.Entry<String,String> headerEntry : headerMap.entrySet()) {
-            MessageBytes mb = mimeHeaders.addValue(headerEntry.getKey());
-            mb.setString(headerEntry.getValue());
+            // Ignore disallowed trailer field names
+            if (HeaderUtil.DISALLOWED_TRAILER_FIELD_NAMES.contains(
+                    headerEntry.getKey().toLowerCase(Locale.ENGLISH))) {
+                continue;
+            }
+            MessageBytes mb = mimeHeaders.addValue(HeaderUtil.filterForHeaders(headerEntry.getKey()));
+            mb.setString(HeaderUtil.filterForHeaders(headerEntry.getValue()));
         }
 
         handler.writeHeaders(this, mimeHeaders, true, Constants.DEFAULT_HEADERS_FRAME_SIZE);

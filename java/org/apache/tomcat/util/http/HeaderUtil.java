@@ -16,7 +16,36 @@
  */
 package org.apache.tomcat.util.http;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 public class HeaderUtil {
+
+    /**
+     * The set of trailer field names that MUST NOT be included in trailer fields as per RFC 9110 section 6.5.1.
+     */
+    public static final Set<String> DISALLOWED_TRAILER_FIELD_NAMES;
+
+    static {
+        // Always add these in lower case
+        Set<String> names = new HashSet<>();
+        names.add("age");
+        names.add("cache-control");
+        names.add("content-length");
+        names.add("content-encoding");
+        names.add("content-range");
+        names.add("content-type");
+        names.add("date");
+        names.add("expires");
+        names.add("location");
+        names.add("retry-after");
+        names.add("trailer");
+        names.add("transfer-encoding");
+        names.add("vary");
+        names.add("warning");
+        DISALLOWED_TRAILER_FIELD_NAMES = Collections.unmodifiableSet(names);
+    }
 
     /**
      * Converts an HTTP header line in byte form to a printable String. Bytes corresponding to visible ASCII characters
@@ -42,6 +71,32 @@ public class HeaderUtil {
             }
         }
         return result.toString();
+    }
+
+
+    /*
+     * Filters out CTLs excluding TAB and any code points above 255 (since this is meant to be ISO-8859-1).
+     *
+     * This doesn't perform full HTTP validation. For example, it does not limit field names to tokens.
+     *
+     * Strictly, correct trailer fields is an application concern. The filtering here is a basic attempt to help
+     * mis-behaving applications prevent the worst of the potential side-effects of invalid trailer fields.
+     */
+    public static String filterForHeaders(String input) {
+        char[] chars = input.toCharArray();
+        boolean updated = false;
+        for (int i = 0; i < chars.length; i++) {
+            if (chars[i] < 32 && chars[i] != 9 || chars[i] == 127 || chars[i] > 255) {
+                chars[i] = ' ';
+                updated = true;
+            }
+        }
+
+        if (updated) {
+            return new String(chars);
+        } else {
+            return input;
+        }
     }
 
 

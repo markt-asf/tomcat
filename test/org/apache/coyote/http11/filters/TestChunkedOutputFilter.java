@@ -26,6 +26,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 
+import org.apache.tomcat.util.http.HeaderUtil;
+
 @RunWith(Parameterized.class)
 public class TestChunkedOutputFilter {
 
@@ -60,7 +62,7 @@ public class TestChunkedOutputFilter {
         sb.append(charUnderTest);
         sb.append(VALID_STRING);
 
-        String result = ChunkedOutputFilter.filterForHeaders(sb.toString());
+        String result = HeaderUtil.filterForHeaders(sb.toString());
 
         String expected;
         if (valid) {
@@ -83,7 +85,7 @@ public class TestChunkedOutputFilter {
         sb.append(charUnderTest);
         sb.append(VALID_STRING);
 
-        String result = ChunkedOutputFilter.filterForHeaders(sb.toString());
+        String result = HeaderUtil.filterForHeaders(sb.toString());
 
         String expected;
         if (valid) {
@@ -106,7 +108,7 @@ public class TestChunkedOutputFilter {
         sb.append(VALID_STRING);
         sb.append(charUnderTest);
 
-        String result = ChunkedOutputFilter.filterForHeaders(sb.toString());
+        String result = HeaderUtil.filterForHeaders(sb.toString());
 
         String expected;
         if (valid) {

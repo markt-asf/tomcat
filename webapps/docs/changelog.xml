@@ -249,7 +249,11 @@
       <add>
         Provide trailer field filtering equivalent to that provided for
         non-trailer fields. Control characters (excluding TAB), and characters
-        with code points above 255 will be replaced with a space. (markt)
+        with code points above 255 will be replaced with a space. Refactor the
+        filtering logic and disallowed trailer field name set into
+        <code>HeaderUtil</code> for reuse. Apply the same filtering and
+        disallowed trailer field name checking to HTTP/2 trailer fields.
+        (markt)
       </add>
     </changelog>
   </subsection>
