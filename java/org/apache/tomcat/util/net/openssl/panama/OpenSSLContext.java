@@ -1071,19 +1071,23 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
                     if (MemorySegment.NULL.equals(cert)) {
                         log.error(sm.getString("openssl.errorLoadingCertificateWithError",
                                 certificate.getCertificateFile(), OpenSSLLibrary.getLastError()));
+                        EVP_PKEY_free(key);
                         return false;
                     }
                 }
                 if (SSL_CTX_use_certificate(state.sslCtx, cert) <= 0) {
                     logLastError("openssl.errorLoadingCertificate");
                     X509_free(cert);
+                    EVP_PKEY_free(key);
                     return false;
                 }
                 X509_free(cert);
                 if (SSL_CTX_use_PrivateKey(state.sslCtx, key) <= 0) {
                     logLastError("openssl.errorLoadingPrivateKey");
+                    EVP_PKEY_free(key);
                     return false;
                 }
+                EVP_PKEY_free(key);
                 if (SSL_CTX_check_private_key(state.sslCtx) <= 0) {
                     logLastError("openssl.errorPrivateKeyCheck");
                     return false;
@@ -1257,13 +1261,16 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
                 if (SSL_CTX_use_certificate(state.sslCtx, x509cert) <= 0) {
                     logLastError("openssl.errorLoadingCertificate");
                     X509_free(x509cert);
+                    EVP_PKEY_free(privateKeyAddress);
                     return false;
                 }
                 X509_free(x509cert);
                 if (SSL_CTX_use_PrivateKey(state.sslCtx, privateKeyAddress) <= 0) {
                     logLastError("openssl.errorLoadingPrivateKey");
+                    EVP_PKEY_free(privateKeyAddress);
                     return false;
                 }
+                EVP_PKEY_free(privateKeyAddress);
                 if (SSL_CTX_check_private_key(state.sslCtx) <= 0) {
                     logLastError("openssl.errorPrivateKeyCheck");
                     return false;
