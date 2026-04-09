@@ -203,6 +203,11 @@
         Align the escaping in <code>ExtendedAccessLogValve</code> with the other
         <code>AccessLogValve</code> implementations. (markt)
       </fix>
+      <fix>
+        Fix missing escaping for the query string in the <code>cs-uri</code>
+        element of <code>ExtendedAccessLogValve</code>. Refactor to use the
+        common <code>appendQueryString()</code> method. (michaelo)
+      </fix>
     </changelog>
   </subsection>
   <subsection name="Coyote">

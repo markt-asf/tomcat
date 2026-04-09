@@ -611,14 +611,7 @@ public class ExtendedAccessLogValve extends AccessLogValve {
                     return (buf, request, res, l) -> {
                         if (request != null) {
                             escapeAndAppend(request.getRequestURI(), buf);
-                            String query = request.getQueryString();
-                            if (query != null) {
-                                buf.append('?');
-                                // Don't want to write "-" if the query string is present but empty
-                                if (!query.isEmpty()) {
-                                    buf.append(query);
-                                }
-                            }
+                            appendQueryString(request.getQueryString(), buf, false);
                         } else {
                             buf.append('-');
                         }
