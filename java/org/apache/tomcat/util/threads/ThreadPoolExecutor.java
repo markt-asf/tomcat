@@ -1168,9 +1168,6 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * <p>
      * This method does not wait for previously submitted tasks to complete execution. Use {@link #awaitTermination
      * awaitTermination} to do that.
-     *
-     * @throws SecurityException If a security manager exists and shutting down this
-      *             pool requires the {@link RuntimePermission}{@code ("shutdownNow")} permission
       */
     @Override
     public void shutdown() {
@@ -1197,9 +1194,6 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * There are no guarantees beyond best-effort attempts to stop processing actively executing tasks. This
      * implementation interrupts tasks via {@link Thread#interrupt}; any task that fails to respond to interrupts may
      * never terminate.
-     *
-    * @throws SecurityException If a security manager exists and shutting down this
-      *             pool requires the {@link RuntimePermission}{@code ("shutdownNow")} permission
       */
     @Override
     public List<Runnable> shutdownNow() {
