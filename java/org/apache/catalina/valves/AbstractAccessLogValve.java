@@ -1640,14 +1640,13 @@ public abstract class AbstractAccessLogValve extends ValveBase implements Access
          * @param styleName The name of the elapsed-time style to use.
          */
         public ElapsedTimeElement(String styleName) {
-            Style style = switch (styleName) {
+            this.style = switch (styleName) {
                 case "ns" -> ElapsedTimeElement.Style.NANOSECONDS;
                 case "us" -> ElapsedTimeElement.Style.MICROSECONDS;
                 case "ms" -> ElapsedTimeElement.Style.MILLISECONDS;
                 case "fracsec" -> ElapsedTimeElement.Style.SECONDS_FRACTIONAL;
                 case null, default -> ElapsedTimeElement.Style.SECONDS;
             };
-            this(style);
         }
 
         @Override
