@@ -1634,6 +1634,22 @@ public abstract class AbstractAccessLogValve extends ValveBase implements Access
             this.style = style;
         }
 
+        /**
+         * Creates a new ElapsedTimeElement that will log the time in the specified style.
+         *
+         * @param styleName The name of the elapsed-time style to use.
+         */
+        public ElapsedTimeElement(String styleName) {
+            Style style = switch (styleName) {
+                case "ns" -> ElapsedTimeElement.Style.NANOSECONDS;
+                case "us" -> ElapsedTimeElement.Style.MICROSECONDS;
+                case "ms" -> ElapsedTimeElement.Style.MILLISECONDS;
+                case "fracsec" -> ElapsedTimeElement.Style.SECONDS_FRACTIONAL;
+                case null, default -> ElapsedTimeElement.Style.SECONDS;
+            };
+            this(style);
+        }
+
         @Override
         public void addElement(CharArrayWriter buf, Request request, Response response, long time) {
             style.append(buf, time);
@@ -2223,15 +2239,7 @@ public abstract class AbstractAccessLogValve extends ValveBase implements Access
             }
             case 's' -> new SessionAttributeElement(name);
             case 't' -> new DateAndTimeElement(name);
-            case 'T' ->
-                    // ms for milliseconds, us for microseconds, and s for seconds
-                    switch (name) {
-                        case "ns" -> new ElapsedTimeElement(ElapsedTimeElement.Style.NANOSECONDS);
-                        case "us" -> new ElapsedTimeElement(ElapsedTimeElement.Style.MICROSECONDS);
-                        case "ms" -> new ElapsedTimeElement(ElapsedTimeElement.Style.MILLISECONDS);
-                        case "fracsec" -> new ElapsedTimeElement(ElapsedTimeElement.Style.SECONDS_FRACTIONAL);
-                        case null, default -> new ElapsedTimeElement(ElapsedTimeElement.Style.SECONDS);
-                    };
+            case 'T' -> new ElapsedTimeElement(name);
             default -> new StringElement("???");
         };
     }
