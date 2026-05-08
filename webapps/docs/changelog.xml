@@ -129,6 +129,10 @@
         <code>AprLifecycleListener</code> and gracefully fail when natives
         are not present. (csutherl)
       </fix>
+      <fix>
+        Prevent duplicate log messages when clustering JARs are not present on
+        startup. (csutherl)
+      </fix>
       <add>
         Add the Jakarta EE 12 XML schemas. (markt)
       </add>
