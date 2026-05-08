@@ -715,6 +715,10 @@ public class ManagerServlet extends HttpServlet implements ContainerServlet {
         }
 
         File deployedWar = new File(host.getAppBaseFile(), baseName + ".war");
+        if (!pathCheck(deployedWar, host.getAppBaseFile(), writer, smClient)) {
+            // Any error reported in pathCheck()
+            return;
+        }
 
         // Determine full path for uploaded WAR
         File uploadedWar;
@@ -732,8 +736,8 @@ public class ManagerServlet extends HttpServlet implements ContainerServlet {
             }
         } else {
             File uploadPath = new File(versioned, tag);
-            if (!versionedPathCheck(uploadPath, writer, smClient)) {
-                // Any error reported in versionedPathCheck()
+            if (!pathCheck(uploadPath, versioned, writer, smClient)) {
+                // Any error reported in pathCheck()
                 return;
             }
             if (!uploadPath.mkdirs() && !uploadPath.isDirectory()) {
@@ -821,13 +825,16 @@ public class ManagerServlet extends HttpServlet implements ContainerServlet {
 
         // Find the local WAR file
         File localWar = new File(new File(versioned, tag), baseName + ".war");
-        if (!versionedPathCheck(localWar, writer, smClient)) {
-            // Any error reported in versionedPathCheck()
+        if (!pathCheck(localWar, versioned, writer, smClient)) {
+            // Any error reported in pathCheck()
             return;
         }
 
-
         File deployedWar = new File(host.getAppBaseFile(), baseName + ".war");
+        if (!pathCheck(deployedWar, host.getAppBaseFile(), writer, smClient)) {
+            // Any error reported in pathCheck()
+            return;
+        }
 
         // Copy WAR to appBase
         try {
@@ -859,14 +866,14 @@ public class ManagerServlet extends HttpServlet implements ContainerServlet {
     }
 
 
-    private boolean versionedPathCheck(File input, PrintWriter writer, StringManager smClient) {
+    private static boolean pathCheck(File input, File expected, PrintWriter writer, StringManager smClient) {
         try {
-            if (!input.getCanonicalPath().startsWith(versioned.getCanonicalPath() + File.separator)) {
-                writer.println(smClient.getString("managerServlet.pathCheckFail", input, versioned));
+            if (!input.getCanonicalFile().toPath().startsWith(expected.getCanonicalFile().toPath())) {
+                writer.println(smClient.getString("managerServlet.pathCheckFail", input, expected));
                 return false;
             }
         } catch (IOException ioe) {
-            writer.println(smClient.getString("managerServlet.pathCheckError", input, versioned, ioe.getMessage()));
+            writer.println(smClient.getString("managerServlet.pathCheckError", input, expected, ioe.getMessage()));
             return false;
         }
         return true;
@@ -940,7 +947,12 @@ public class ManagerServlet extends HttpServlet implements ContainerServlet {
                             return;
                         }
                         File localConfigFile = new File(configBase, baseName + ".xml");
+                        if (!pathCheck(localConfigFile, configBase, writer, smClient)) {
+                            // Any error reported in pathCheck()
+                            return;
+                        }
                         File configFile = new File(config);
+
                         // Skip delete and copy if source == destination
                         if (!configFile.getCanonicalPath().equals(localConfigFile.getCanonicalPath())) {
                             if (localConfigFile.isFile() && !localConfigFile.delete()) {
@@ -961,9 +973,18 @@ public class ManagerServlet extends HttpServlet implements ContainerServlet {
                         } else {
                             localWarFile = new File(host.getAppBaseFile(), baseName);
                         }
+                        if (!pathCheck(localWarFile, host.getAppBaseFile(), writer, smClient)) {
+                            // Any error reported in pathCheck()
+                            return;
+                        }
+
                         File warFile = new File(war);
                         if (!warFile.isAbsolute()) {
                             warFile = new File(host.getAppBaseFile(), war);
+                            if (!pathCheck(warFile, host.getAppBaseFile(), writer, smClient)) {
+                                // Any error reported in pathCheck()
+                                return;
+                            }
                         }
                         // Skip delete and copy if source == destination
                         if (!warFile.getCanonicalPath().equals(localWarFile.getCanonicalPath())) {

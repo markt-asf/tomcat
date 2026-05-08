@@ -331,8 +331,8 @@
     <changelog>
       <!-- Entries for backport and removal before 12.0.0-M1 below this line -->
       <add>
-        Manager: Add a check to ensure that any web application uploaded using
-        the tag mechanism is uploaded to the correct location. (markt)
+        Manager: Add checks to ensure that any uploaded files are uploaded to
+        the expected location. (markt)
       </add>
     </changelog>
   </subsection>
