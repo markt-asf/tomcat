@@ -732,6 +732,15 @@ public class ManagerServlet extends HttpServlet implements ContainerServlet {
             }
         } else {
             File uploadPath = new File(versioned, tag);
+            try {
+                if (!uploadPath.getCanonicalPath().startsWith(versioned.getCanonicalPath())) {
+                    writer.println(smClient.getString("managerServlet.pathCheckFail", uploadPath, versioned));
+                    return;
+                }
+            } catch (IOException ioe) {
+                writer.println(smClient.getString("managerServlet.pathCheckError", uploadPath, versioned, ioe.getMessage()));
+                return;
+            }
             if (!uploadPath.mkdirs() && !uploadPath.isDirectory()) {
                 writer.println(smClient.getString("managerServlet.mkdirFail", uploadPath));
                 return;

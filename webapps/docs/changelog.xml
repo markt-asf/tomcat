@@ -330,6 +330,10 @@
   <subsection name="Web applications">
     <changelog>
       <!-- Entries for backport and removal before 12.0.0-M1 below this line -->
+      <add>
+        Manager: Add a check to ensure that any web application uploaded using
+        the tag mechanism is uploaded to the correct location. (markt)
+      </add>
     </changelog>
   </subsection>
   <subsection name="jdbc-pool">
