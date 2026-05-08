@@ -732,13 +732,8 @@ public class ManagerServlet extends HttpServlet implements ContainerServlet {
             }
         } else {
             File uploadPath = new File(versioned, tag);
-            try {
-                if (!uploadPath.getCanonicalPath().startsWith(versioned.getCanonicalPath())) {
-                    writer.println(smClient.getString("managerServlet.pathCheckFail", uploadPath, versioned));
-                    return;
-                }
-            } catch (IOException ioe) {
-                writer.println(smClient.getString("managerServlet.pathCheckError", uploadPath, versioned, ioe.getMessage()));
+            if (!versionedPathCheck(uploadPath, writer, smClient)) {
+                // Any error reported in versionedPathCheck()
                 return;
             }
             if (!uploadPath.mkdirs() && !uploadPath.isDirectory()) {
@@ -826,6 +821,11 @@ public class ManagerServlet extends HttpServlet implements ContainerServlet {
 
         // Find the local WAR file
         File localWar = new File(new File(versioned, tag), baseName + ".war");
+        if (!versionedPathCheck(localWar, writer, smClient)) {
+            // Any error reported in versionedPathCheck()
+            return;
+        }
+
 
         File deployedWar = new File(host.getAppBaseFile(), baseName + ".war");
 
@@ -858,6 +858,19 @@ public class ManagerServlet extends HttpServlet implements ContainerServlet {
         writeDeployResult(writer, smClient, name, displayPath);
     }
 
+
+    private boolean versionedPathCheck(File input, PrintWriter writer, StringManager smClient) {
+        try {
+            if (!input.getCanonicalPath().startsWith(versioned.getCanonicalPath() + File.separator)) {
+                writer.println(smClient.getString("managerServlet.pathCheckFail", input, versioned));
+                return false;
+            }
+        } catch (IOException ioe) {
+            writer.println(smClient.getString("managerServlet.pathCheckError", input, versioned, ioe.getMessage()));
+            return false;
+        }
+        return true;
+    }
 
     /**
      * Install an application for the specified path from the specified web application archive.
