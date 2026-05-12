@@ -215,6 +215,10 @@
         Add support for literal <code>'%'</code> characters in access log
         output. Based on pull request <pr>1002</pr> by Fabian Hahn. (markt)
       </add>
+      <fix>
+        <bug>70038</bug>: <code>Cookie.clone()</code> should also clone internal
+        attribute map. (markt)
+      </fix>
     </changelog>
   </subsection>
   <subsection name="Coyote">
